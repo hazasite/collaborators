@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Setup — HAZA Collaborators</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@600;700&family=Cabinet+Grotesk:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#06060a;--gold:#ffb43c;--gold2:#ff7c2a;--gold-dim:rgba(255,180,60,0.08);
+  --border:rgba(255,180,60,0.14);--border-hi:rgba(255,180,60,0.32);
+  --text:#f0ece4;--text-dim:#c8c2b8;--muted:#7a7568;--muted2:#504d46;
+  --green:#34d399;--red:#f87171;--surface:rgba(12,14,22,0.95);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Cabinet Grotesk',sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  -webkit-font-smoothing:antialiased;
+}
+/* subtle gold gradient bg */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(255,180,60,0.06),transparent 70%);
+  pointer-events:none;
+}
+
+.card{
+  width:480px;max-width:94vw;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:24px;padding:40px;
+  box-shadow:0 24px 60px rgba(0,0,0,0.6);
+  animation:fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
+  position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+.logo-row{display:flex;align-items:center;gap:12px;margin-bottom:32px;}
+.logo-mark{
+  width:42px;height:42px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Clash Display',sans-serif;font-weight:700;font-size:1rem;color:#000;
+}
+.logo-name{font-family:'Clash Display',sans-serif;font-weight:700;font-size:1.1rem;letter-spacing:-0.4px;}
+.logo-sub{font-size:0.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 12px;border-radius:100px;margin-bottom:22px;
+  background:rgba(255,180,60,0.1);border:1px solid var(--border-hi);
+  font-size:0.7rem;color:var(--gold);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1.5px;
+}
+h1{
+  font-family:'Clash Display',sans-serif;font-size:1.7rem;font-weight:700;
+  letter-spacing:-0.5px;line-height:1.2;margin-bottom:8px;
+}
+h1 span{
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.subtitle{font-size:0.88rem;color:var(--muted);line-height:1.6;margin-bottom:28px;}
+
+.info-box{
+  padding:14px 16px;border-radius:10px;margin-bottom:24px;
+  background:rgba(255,180,60,0.05);border:1px solid var(--border);
+  font-size:0.82rem;color:var(--text-dim);line-height:1.7;
+}
+.info-box strong{color:var(--gold);}
+
+.fg{margin-bottom:16px;}
+.fl{
+  display:block;margin-bottom:6px;
+  font-size:0.7rem;font-weight:700;color:var(--muted);
+  letter-spacing:1px;text-transform:uppercase;
+  font-family:'JetBrains Mono',monospace;
+}
+.fi{
+  width:100%;padding:12px 16px;border-radius:10px;
+  background:var(--gold-dim);border:1px solid var(--border);
+  color:var(--text);font-family:'Cabinet Grotesk',sans-serif;font-size:0.92rem;
+  outline:none;transition:all 0.2s;
+}
+.fi:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,180,60,0.1);}
+.fi::placeholder{color:var(--muted2);}
+.fi[readonly]{opacity:0.55;cursor:not-allowed;}
+
+.btn{
+  width:100%;padding:14px;border-radius:12px;border:none;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#000;font-family:'Cabinet Grotesk',sans-serif;
+  font-weight:800;font-size:0.95rem;cursor:pointer;
+  transition:all 0.2s;box-shadow:0 4px 20px rgba(255,180,60,0.3);
+  position:relative;display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-top:8px;
+}
+.btn:hover{box-shadow:0 6px 28px rgba(255,180,60,0.45);transform:translateY(-1px);}
+.btn:active{transform:translateY(0);}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+
+/* STATUS */
+.status-box{
+  display:none;margin-top:16px;padding:14px 16px;border-radius:10px;
+  font-size:0.85rem;font-weight:600;line-height:1.55;
+  animation:fadeUp 0.3s both;
+}
+.status-box.show{display:block;}
+.status-box.success{
+  background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.25);
+  color:var(--green);
+}
+.status-box.error{
+  background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);
+  color:var(--red);
+}
+.status-box.info{
+  background:var(--gold-dim);border:1px solid var(--border-hi);
+  color:var(--gold);
+}
+
+/* STEP INDICATOR */
+.steps{display:flex;flex-direction:column;gap:8px;margin-top:20px;}
+.step{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-radius:9px;
+  background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);
+  font-size:0.82rem;color:var(--muted);transition:all 0.3s;
+}
+.step.done{background:rgba(52,211,153,0.07);border-color:rgba(52,211,153,0.2);color:var(--green);}
+.step.active{background:var(--gold-dim);border-color:var(--border-hi);color:var(--gold);}
+.step.error{background:rgba(248,113,113,0.07);border-color:rgba(248,113,113,0.2);color:var(--red);}
+.step-dot{
+  width:20px;height:20px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.7rem;font-family:'JetBrains Mono',monospace;font-weight:700;
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);
+}
+.step.done .step-dot{background:rgba(52,211,153,0.2);border-color:rgba(52,211,153,0.4);}
+.step.active .step-dot{background:rgba(255,180,60,0.2);border-color:rgba(255,180,60,0.4);}
+.step.error .step-dot{background:rgba(248,113,113,0.2);border-color:rgba(248,113,113,0.4);}
+
+.login-link{
+  display:block;text-align:center;margin-top:20px;
+  font-size:0.85rem;color:var(--muted);text-decoration:none;transition:color 0.2s;
+}
+.login-link:hover{color:var(--gold);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo-row">
+    <div class="logo-mark">H</div>
+    <div>
+      <div class="logo-name">HAZA Collaborators</div>
+      <div class="logo-sub">One-time Admin Setup</div>
+    </div>
+  </div>
+
+  <div class="badge">⚙️ First-time Setup</div>
+
+  <h1>Create Your<br/><span>Admin Account</span></h1>
+  <p class="subtitle">This creates your Firebase Auth account and sets you as admin. Run this once — delete setup.html after.</p>
+
+  <div class="info-box">
+    Admin credentials pre-filled:<br/>
+    <strong>Email:</strong> haza@haza.lk &nbsp;·&nbsp; <strong>Password:</strong> haza201201
+  </div>
+
+  <div class="fg">
+    <label class="fl">Full Name</label>
+    <input id="su-name" class="fi" type="text" placeholder="Janma Hasarel" value="Janma Hasarel"/>
+  </div>
+  <div class="fg">
+    <label class="fl">Email</label>
+    <input id="su-email" class="fi" type="email" value="haza@haza.lk" readonly/>
+  </div>
+  <div class="fg">
+    <label class="fl">Password</label>
+    <input id="su-pw" class="fi" type="text" value="haza201201" readonly/>
+  </div>
+
+  <button class="btn" id="setup-btn" onclick="runSetup()">
+    🚀 Create Admin Account
+  </button>
+
+  <div class="steps" id="steps" style="display:none;">
+    <div class="step" id="step-auth">
+      <div class="step-dot">1</div>
+      <span>Creating Firebase Auth account...</span>
+    </div>
+    <div class="step" id="step-firestore">
+      <div class="step-dot">2</div>
+      <span>Saving admin profile to Firestore...</span>
+    </div>
+    <div class="step" id="step-done">
+      <div class="step-dot">3</div>
+      <span>Redirecting to login...</span>
+    </div>
+  </div>
+
+  <div class="status-box" id="status"></div>
+
+  <a class="login-link" href="login.html">← Already have an account? Login</a>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCXqiGYfRyAEBjz9I_ZHaMnkGXTvuATgps",
+  authDomain: "haza-collaborators.firebaseapp.com",
+  databaseURL: "https://haza-collaborators-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "haza-collaborators",
+  storageBucket: "haza-collaborators.firebasestorage.app",
+  messagingSenderId: "1053559570462",
+  appId: "1:1053559570462:web:5459a512e9218b136eae0f",
+  measurementId: "G-CS32VS7LH5"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+function setStep(id, state, text) {
+  const el = document.getElementById(id);
+  el.className = 'step ' + state;
+  if (text) el.querySelector('span').textContent = text;
+}
+
+function status(msg, type='info') {
+  const el = document.getElementById('status');
+  el.innerHTML = msg;
+  el.className = 'status-box show ' + type;
+}
+
+window.runSetup = async function() {
+  const name  = document.getElementById('su-name').value.trim();
+  const email = document.getElementById('su-email').value.trim();
+  const pw    = document.getElementById('su-pw').value.trim();
+
+  if (!name || !email || !pw) {
+    status('Please fill all fields.', 'error'); return;
+  }
+
+  const btn = document.getElementById('setup-btn');
+  btn.disabled = true;
+  btn.textContent = 'Setting up...';
+  document.getElementById('steps').style.display = 'flex';
+
+  // Step 1: Create Firebase Auth account
+  setStep('step-auth', 'active', 'Creating Firebase Auth account...');
+  let userCred;
+  try {
+    userCred = await createUserWithEmailAndPassword(auth, email, pw);
+    setStep('step-auth', 'done', '✓ Firebase Auth account created');
+  } catch(e) {
+    let msg = e.message;
+    if (e.code === 'auth/email-already-in-use') {
+      msg = 'Email already exists in Firebase Auth. The account already exists — try logging in!';
+    }
+    setStep('step-auth', 'error', '✗ Auth error: ' + e.code);
+    status(msg, 'error');
+    btn.disabled = false; btn.textContent = '🚀 Create Admin Account';
+    return;
+  }
+
+  // Step 2: Save admin profile to Firestore
+  setStep('step-firestore', 'active', 'Saving admin profile to Firestore...');
+  try {
+    await setDoc(doc(db, 'users', userCred.user.uid), {
+      uid: userCred.user.uid,
+      name: name,
+      email: email,
+      role: 'admin',
+      color: '#ffb43c',
+      joined: serverTimestamp(),
+      status: 'active'
+    });
+    setStep('step-firestore', 'done', '✓ Admin profile saved to Firestore');
+  } catch(e) {
+    setStep('step-firestore', 'error', '✗ Firestore error: ' + e.message);
+    status('Firestore error: ' + e.message + '<br/><br/>Note: Check your Firestore security rules — make sure write is allowed during setup.', 'error');
+    btn.disabled = false; btn.textContent = '🚀 Create Admin Account';
+    return;
+  }
+
+  // Step 3: Done
+  setStep('step-done', 'active', 'Account ready! Signing out and redirecting...');
+  status('✅ Admin account created successfully!<br/>Email: <strong>' + email + '</strong><br/>Redirecting to login in 3 seconds...', 'success');
+
+  await signOut(auth);
+  setTimeout(() => { window.location.href = 'login.html'; }, 2800);
+};
+</script>
+</body>
+</html>

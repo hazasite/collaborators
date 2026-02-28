@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sign In — HAZA Collaborators</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ─── VARIABLES ─── */
+:root{
+  --bg:#070c18; --surface:rgba(11,17,36,0.96); --surface2:rgba(16,24,48,0.80);
+  --border:rgba(96,130,232,0.12); --border-md:rgba(96,130,232,0.22); --border-hi:rgba(96,130,232,0.38);
+  --blue:#6082e8; --blue-dim:rgba(96,130,232,0.10); --blue-glow:rgba(96,130,232,0.22);
+  --purple:#8b72e8; --teal:#3ecfcf; --green:#34d399; --amber:#fbbf24; --red:#f87171;
+  --text:#dde4f5; --text-dim:#a0aec8; --muted:#677299; --muted2:#3d4f72;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  font-family:'Manrope',sans-serif; background:var(--bg); color:var(--text);
+  display:flex; align-items:center; justify-content:center;
+  min-height:100vh; overflow:hidden; -webkit-font-smoothing:antialiased;
+}
+#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+
+/* ─── LAYOUT ─── */
+.page{
+  position:relative;z-index:10;
+  display:flex;gap:0;width:100%;max-width:980px;
+  min-height:600px;border-radius:28px;overflow:hidden;
+  box-shadow:0 32px 80px rgba(0,0,0,0.6);
+  border:1px solid var(--border-md);
+  animation:fadeIn 0.6s cubic-bezier(0.16,1,0.3,1) both;
+  margin:24px;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+
+/* LEFT PANEL */
+.left-panel{
+  flex:1; padding:52px 48px;
+  background:rgba(11,17,36,0.97);
+  -webkit-backdrop-filter:blur(28px);backdrop-filter:blur(28px);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+}
+.brand-row{display:flex;align-items:center;gap:10px;margin-bottom:48px;}
+.brand-mark{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:0.85rem;color:#fff;
+}
+.brand-name{
+  font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;
+  color:var(--text);letter-spacing:-0.3px;
+}
+.brand-sub{font-size:0.72rem;color:var(--muted);margin-top:1px;font-family:'JetBrains Mono',monospace;}
+
+.form-heading{
+  font-family:'Syne',sans-serif;font-size:1.85rem;font-weight:800;
+  line-height:1.15;margin-bottom:10px;letter-spacing:-0.5px;
+}
+.form-sub{font-size:0.88rem;color:var(--muted);margin-bottom:36px;line-height:1.55;}
+
+.fg{margin-bottom:18px;}
+.label{
+  display:block;margin-bottom:7px;
+  font-size:0.74rem;font-weight:700;color:var(--muted);
+  letter-spacing:0.8px;text-transform:uppercase;
+  font-family:'JetBrains Mono',monospace;
+}
+.field{
+  width:100%;padding:12px 16px;
+  background:rgba(96,130,232,0.05);
+  border:1px solid var(--border);border-radius:10px;
+  color:var(--text);font-family:'Manrope',sans-serif;font-size:0.93rem;
+  outline:none;transition:all 0.2s;
+}
+.field:focus{border-color:var(--blue);background:rgba(96,130,232,0.09);box-shadow:0 0 0 3px rgba(96,130,232,0.1);}
+.field::placeholder{color:var(--muted2);}
+
+.btn-login{
+  width:100%;padding:13px;border-radius:10px;border:none;
+  background:var(--blue);color:#fff;
+  font-family:'Manrope',sans-serif;font-weight:800;font-size:0.95rem;
+  cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;
+  box-shadow:0 4px 20px rgba(96,130,232,0.28);
+  position:relative;
+}
+.btn-login:hover{background:#7090f0;box-shadow:0 6px 28px rgba(96,130,232,0.4);transform:translateY(-1px);}
+.btn-login:active{transform:translateY(0);}
+.btn-login:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+
+.spinner{
+  display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);
+  border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;
+  position:absolute;right:16px;top:50%;transform:translateY(-50%);
+}
+.btn-login:disabled .spinner{display:inline-block;}
+@keyframes spin{to{transform:translateY(-50%) rotate(360deg);}}
+
+.err-msg{
+  display:none;margin-top:12px;padding:10px 14px;
+  background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);
+  border-radius:8px;font-size:0.82rem;color:var(--red);text-align:center;
+}
+
+.divider{
+  display:flex;align-items:center;gap:12px;
+  margin:28px 0 20px;color:var(--muted2);font-size:0.75rem;
+}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* APPLY CARD */
+.apply-card{
+  margin-bottom:14px;padding:14px 16px;border-radius:10px;
+  background:linear-gradient(135deg,rgba(255,180,60,0.08),rgba(255,124,42,0.04));
+  border:1px solid rgba(255,180,60,0.2);
+  display:flex;align-items:center;gap:12px;
+  text-decoration:none;color:var(--text);
+  transition:all 0.2s;
+}
+.apply-card:hover{border-color:rgba(255,180,60,0.4);transform:translateY(-1px);}
+.apply-card .ac-icon{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,rgba(255,180,60,0.2),rgba(255,124,42,0.15));
+  display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;
+}
+/* .apply-card .ac-text */
+.apply-card .ac-label{font-size:0.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;}
+.apply-card .ac-value{font-size:0.85rem;font-weight:700;color:var(--text-dim);}
+.apply-card .ac-arr{margin-left:auto;color:var(--muted);font-size:0.9rem;}
+
+/* CONTACT BUTTONS */
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.contact-btn{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;border-radius:10px;
+  background:rgba(96,130,232,0.05);border:1px solid var(--border);
+  text-decoration:none;color:var(--text);
+  transition:all 0.2s;cursor:pointer;
+}
+.contact-btn:hover{border-color:var(--border-md);background:rgba(96,130,232,0.1);transform:translateY(-1px);}
+.contact-btn .cb-icon{
+  width:34px;height:34px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;flex-shrink:0;
+}
+.cb-wa  .cb-icon{background:rgba(37,211,102,0.1);}
+.cb-gh  .cb-icon{background:rgba(255,255,255,0.05);}
+.contact-btn .cb-label{font-size:0.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;}
+.contact-btn .cb-value{font-size:0.82rem;font-weight:700;color:var(--text-dim);}
+
+/* COMMUNITY CARD */
+.community-card{
+  margin-top:12px;padding:14px 16px;border-radius:10px;
+  background:linear-gradient(135deg,rgba(139,114,232,0.08),rgba(62,207,207,0.05));
+  border:1px solid rgba(139,114,232,0.18);
+  display:flex;align-items:center;gap:12px;
+  text-decoration:none;color:var(--text);
+  transition:all 0.2s;
+}
+.community-card:hover{border-color:rgba(139,114,232,0.35);transform:translateY(-1px);}
+.community-card .cc-icon{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,var(--purple),var(--teal));
+  display:flex;align-items:center;justify-content:center;font-size:1.2rem;
+  flex-shrink:0;
+}
+/* .community-card .cc-text */
+.community-card .cc-label{font-size:0.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;}
+.community-card .cc-value{font-size:0.85rem;font-weight:700;color:var(--text-dim);}
+.community-card .cc-arr{margin-left:auto;color:var(--muted);font-size:0.9rem;}
+
+/* RIGHT PANEL */
+.right-panel{
+  width:340px;padding:52px 36px;
+  background:linear-gradient(160deg,rgba(96,130,232,0.06) 0%,rgba(139,114,232,0.04) 50%,rgba(62,207,207,0.03) 100%);
+  display:flex;flex-direction:column;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.right-panel::before{
+  content:'';position:absolute;top:-80px;right:-80px;
+  width:260px;height:260px;border-radius:50%;
+  background:radial-gradient(circle,rgba(96,130,232,0.12),transparent 70%);
+}
+.right-panel::after{
+  content:'';position:absolute;bottom:-60px;left:-60px;
+  width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(139,114,232,0.1),transparent 70%);
+}
+.rp-label{
+  font-family:'JetBrains Mono',monospace;font-size:0.68rem;
+  color:var(--blue);text-transform:uppercase;letter-spacing:2px;
+  margin-bottom:20px;position:relative;z-index:1;
+}
+.rp-title{
+  font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;
+  line-height:1.2;letter-spacing:-0.5px;margin-bottom:16px;
+  position:relative;z-index:1;
+}
+.rp-title span{
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.rp-desc{font-size:0.87rem;color:var(--muted);line-height:1.65;position:relative;z-index:1;margin-bottom:32px;}
+
+.how-it-works{display:flex;flex-direction:column;gap:12px;position:relative;z-index:1;margin-bottom:28px;}
+.hiw-step{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:12px 14px;border-radius:10px;
+  background:rgba(11,17,36,0.6);border:1px solid var(--border);
+}
+.hiw-num{
+  width:24px;height:24px;border-radius:6px;
+  background:var(--blue-dim);border:1px solid var(--border-md);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.7rem;font-weight:700;color:var(--blue);
+  font-family:'JetBrains Mono',monospace;flex-shrink:0;
+}
+.hiw-text{font-size:0.82rem;color:var(--text-dim);font-weight:500;line-height:1.4;}
+
+.feature-list{display:flex;flex-direction:column;gap:10px;position:relative;z-index:1;}
+.feature-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:10px;
+  background:rgba(11,17,36,0.6);border:1px solid var(--border);
+}
+.feature-item .fi-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:0.88rem;flex-shrink:0;background:var(--blue-dim);}
+.feature-item .fi-text{font-size:0.82rem;color:var(--text-dim);font-weight:500;}
+
+.rp-footer{
+  margin-top:24px;padding-top:20px;border-top:1px solid var(--border);
+  font-size:0.75rem;color:var(--muted);position:relative;z-index:1;
+  display:flex;align-items:center;gap:8px;
+}
+.rp-footer span{color:var(--blue);font-weight:700;}
+
+/* TOAST */
+#toast{
+  position:fixed;bottom:28px;right:28px;z-index:9999;
+  padding:13px 20px;border-radius:14px;font-size:0.87rem;font-weight:600;
+  transform:translateY(70px);opacity:0;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);
+  pointer-events:none;max-width:300px;display:flex;align-items:center;gap:10px;
+}
+#toast.show{transform:translateY(0);opacity:1;}
+#toast.error{background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.3);color:var(--red);}
+#toast.info{background:rgba(96,130,232,0.12);border:1px solid rgba(96,130,232,0.3);color:var(--blue);}
+
+@media(max-width:760px){
+  .page{flex-direction:column;max-width:480px;min-height:auto;}
+  .right-panel{width:100%;padding:32px;}
+  .left-panel{padding:36px 28px;}
+}
+@media(max-width:480px){.contact-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div id="toast"></div>
+
+<div class="page">
+  <!-- LEFT: FORM -->
+  <div class="left-panel">
+    <div class="brand-row">
+      <div class="brand-mark">H</div>
+      <div>
+        <div class="brand-name">HAZA Collaborators</div>
+        <div class="brand-sub">Private Team Platform · Invite Only</div>
+      </div>
+    </div>
+
+    <h1 class="form-heading">Welcome back</h1>
+    <p class="form-sub">Sign in with your team credentials. Access is granted by the admin only.</p>
+
+    <div class="fg">
+      <label class="label">Email Address</label>
+      <input id="email" class="field" type="email" placeholder="you@haza.dev" autocomplete="email"/>
+    </div>
+    <div class="fg">
+      <label class="label">Password</label>
+      <input id="pw" class="field" type="password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+
+    <button class="btn-login" id="login-btn" onclick="doLogin()">
+      Sign In to Workspace
+      <div class="spinner"></div>
+    </button>
+    <div id="err" class="err-msg"></div>
+
+    <div class="divider">Not a member yet?</div>
+
+    <!-- Apply link -->
+    <a href="https://forms.gle/YvWPp2L3M3nQ1hmj7" target="_blank" rel="noopener noreferrer" class="apply-card">
+      <div class="ac-icon">📝</div>
+      <div class="ac-text">
+        <div class="ac-label">Apply to Join HAZA</div>
+        <div class="ac-value">Fill in the application form</div>
+      </div>
+      <span class="ac-arr">↗</span>
+    </a>
+
+    <div class="contact-grid">
+      <a href="https://wa.me/94771315403" target="_blank" rel="noopener noreferrer" class="contact-btn cb-wa">
+        <div class="cb-icon">💬</div>
+        <div>
+          <div class="cb-label">WhatsApp</div>
+          <div class="cb-value">+94 77 131 5403</div>
+        </div>
+      </a>
+      <a href="https://github.com/hazasite" target="_blank" rel="noopener noreferrer" class="contact-btn cb-gh">
+        <div class="cb-icon">🐙</div>
+        <div>
+          <div class="cb-label">GitHub</div>
+          <div class="cb-value">hazasite</div>
+        </div>
+      </a>
+    </div>
+
+    <a href="https://nas.io/kdj" target="_blank" rel="noopener noreferrer" class="community-card">
+      <div class="cc-icon">🧠</div>
+      <div class="cc-text">
+        <div class="cc-label">Mentor Community</div>
+        <div class="cc-value">KD Jayakody · nas.io/kdj</div>
+      </div>
+      <span class="cc-arr">↗</span>
+    </a>
+  </div>
+
+  <!-- RIGHT: INFO -->
+  <div class="right-panel">
+    <div class="rp-label">// How to Get Access</div>
+    <h2 class="rp-title">Your team's<br/><span>collaboration hub</span></h2>
+    <p class="rp-desc">Access is invite-only. The admin generates your credentials after reviewing your application.</p>
+
+    <div class="how-it-works">
+      <div class="hiw-step">
+        <div class="hiw-num">1</div>
+        <div class="hiw-text">Fill in the <strong>Apply Form</strong> to request access to HAZA Collaborators</div>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">2</div>
+        <div class="hiw-text">Admin <strong>reviews</strong> your application and approves if suitable</div>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">3</div>
+        <div class="hiw-text">Admin <strong>generates credentials</strong> (Email + Password) and shares with you</div>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">4</div>
+        <div class="hiw-text"><strong>Sign in</strong> here with your credentials and start collaborating!</div>
+      </div>
+    </div>
+
+    <div class="feature-list">
+      <div class="feature-item"><div class="fi-icon">💬</div><div class="fi-text">Real-time Team Chat</div></div>
+      <div class="feature-item"><div class="fi-icon">🗂️</div><div class="fi-text">Project Workspaces</div></div>
+      <div class="feature-item"><div class="fi-icon">🔐</div><div class="fi-text">Role-based Access Control</div></div>
+    </div>
+    <div class="rp-footer">
+      <div style="width:6px;height:6px;border-radius:50%;background:#34d399;flex-shrink:0;"></div>
+      Platform by <span>HAZA</span> · Janma Hasarel
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCXqiGYfRyAEBjz9I_ZHaMnkGXTvuATgps",
+    authDomain: "haza-collaborators.firebaseapp.com",
+    databaseURL: "https://haza-collaborators-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "haza-collaborators",
+    storageBucket: "haza-collaborators.firebasestorage.app",
+    messagingSenderId: "1053559570462",
+    appId: "1:1053559570462:web:5459a512e9218b136eae0f",
+    measurementId: "G-CS32VS7LH5"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Check if already logged in
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      window.location.href = 'dashboard.html';
+    }
+  });
+
+  function toast(msg, type='info') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `show ${type}`;
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.className = '', 4000);
+  }
+
+  window.doLogin = async function() {
+    const email = document.getElementById('email').value.trim();
+    const pw    = document.getElementById('pw').value;
+    const err   = document.getElementById('err');
+    const btn   = document.getElementById('login-btn');
+
+    if (!email || !pw) {
+      err.textContent = 'Please enter your email and password.';
+      err.style.display = 'block';
+      setTimeout(() => err.style.display = 'none', 3500);
+      return;
+    }
+
+    btn.disabled = true;
+    btn.querySelector('.spinner').style.display = 'inline-block';
+    err.style.display = 'none';
+
+    try {
+      await signInWithEmailAndPassword(auth, email, pw);
+      // onAuthStateChanged will redirect
+    } catch (e) {
+      btn.disabled = false;
+      btn.querySelector('.spinner').style.display = 'none';
+      let msg = 'Invalid email or password.';
+      if (e.code === 'auth/user-not-found') msg = 'No account found with this email.';
+      if (e.code === 'auth/wrong-password') msg = 'Incorrect password. Try again.';
+      if (e.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
+      if (e.code === 'auth/invalid-email') msg = 'Invalid email format.';
+      if (e.code === 'auth/network-request-failed') msg = 'Network error. Check your connection.';
+      err.textContent = msg;
+      err.style.display = 'block';
+      setTimeout(() => err.style.display = 'none', 4000);
+    }
+  };
+
+  // Enter key support
+  document.getElementById('pw').addEventListener('keydown', e => { if(e.key==='Enter') window.doLogin(); });
+  document.getElementById('email').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('pw').focus(); });
+</script>
+
+<!-- Three.js BG -->
+<script>
+(function(){
+  const c=document.getElementById('bg-canvas');
+  if(!window.THREE)return;
+  const r=new THREE.WebGLRenderer({canvas:c,antialias:true,alpha:true});
+  r.setPixelRatio(Math.min(devicePixelRatio,2));r.setSize(innerWidth,innerHeight);
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.1,1000);
+  cam.position.z=80;
+  const N=100;const pos=new Float32Array(N*3);
+  const vel=[];
+  for(let i=0;i<N;i++){
+    pos[i*3]=(Math.random()-.5)*180;pos[i*3+1]=(Math.random()-.5)*120;pos[i*3+2]=(Math.random()-.5)*30;
+    vel.push({x:(Math.random()-.5)*0.007,y:(Math.random()-.5)*0.005});
+  }
+  const pGeo=new THREE.BufferGeometry();pGeo.setAttribute('position',new THREE.BufferAttribute(pos.slice(),3));
+  const pMat=new THREE.PointsMaterial({color:0x6082e8,size:0.65,transparent:true,opacity:0.5});
+  scene.add(new THREE.Points(pGeo,pMat));
+  let lMesh=null;const cur=pos.slice();
+  function buildLines(){
+    const lp=[];
+    for(let i=0;i<N;i++)for(let j=i+1;j<N;j++){
+      const dx=cur[i*3]-cur[j*3],dy=cur[i*3+1]-cur[j*3+1];
+      if(dx*dx+dy*dy<600)lp.push(cur[i*3],cur[i*3+1],cur[i*3+2],cur[j*3],cur[j*3+1],cur[j*3+2]);
+    }
+    if(lMesh)scene.remove(lMesh);
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(lp),3));
+    lMesh=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0x4060b0,transparent:true,opacity:0.13}));
+    scene.add(lMesh);
+  }
+  let mx=0,my=0,fr=0;
+  document.addEventListener('mousemove',e=>{mx=(e.clientX/innerWidth-.5)*1.2;my=-(e.clientY/innerHeight-.5)*0.8;});
+  (function anim(){
+    requestAnimationFrame(anim);fr++;
+    for(let i=0;i<N;i++){
+      cur[i*3]+=vel[i].x;cur[i*3+1]+=vel[i].y;
+      if(cur[i*3]>90)cur[i*3]=-90;if(cur[i*3]<-90)cur[i*3]=90;
+      if(cur[i*3+1]>60)cur[i*3+1]=-60;if(cur[i*3+1]<-60)cur[i*3+1]=60;
+    }
+    pGeo.attributes.position.array.set(cur);pGeo.attributes.position.needsUpdate=true;
+    if(fr%8===0)buildLines();
+    cam.position.x+=(mx*5-cam.position.x)*0.03;
+    cam.position.y+=(my*3-cam.position.y)*0.03;
+    cam.lookAt(0,0,0);
+    r.render(scene,cam);
+  })();
+  window.addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();r.setSize(innerWidth,innerHeight);});
+})();
+</script>
+</body>
+</html>

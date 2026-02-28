@@ -1,0 +1,1931 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HAZA Collaborators — Where Teams Build the Future</title>
+    <meta
+      name="description"
+      content="HAZA Collaborators is a private team platform built by Janma Hasarel for creators, developers, and designers to collaborate and ship together."
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@300;400;500;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ─── RESET & BASE ─── */
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      :root {
+        --bg: #06060a;
+        --surface: rgba(12, 14, 22, 0.88);
+        --border: rgba(255, 180, 60, 0.1);
+        --border-bright: rgba(255, 180, 60, 0.25);
+        --gold: #ffb43c;
+        --gold2: #ff7c2a;
+        --cyan: #00e5ff;
+        --text: #f0ece4;
+        --muted: #7a7568;
+        --muted2: #504d46;
+        --white: #fff;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: "Cabinet Grotesk", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      /* ─── CUSTOM CURSOR ─── */
+      #cursor {
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--gold);
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+        transition:
+          transform 0.08s,
+          width 0.2s,
+          height 0.2s;
+        mix-blend-mode: difference;
+      }
+      #cursor-ring {
+        position: fixed;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1.5px solid var(--gold);
+        pointer-events: none;
+        z-index: 9998;
+        transform: translate(-50%, -50%);
+        transition:
+          transform 0.18s,
+          width 0.2s,
+          height 0.2s,
+          opacity 0.2s;
+        opacity: 0.5;
+      }
+      body:has(a:hover) #cursor {
+        width: 20px;
+        height: 20px;
+      }
+      body:has(a:hover) #cursor-ring {
+        width: 56px;
+        height: 56px;
+        opacity: 0.3;
+      }
+      body:has(button:hover) #cursor {
+        width: 20px;
+        height: 20px;
+      }
+
+      /* ─── THREE CANVAS ─── */
+      #bg-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      /* ─── GRAIN OVERLAY ─── */
+      .grain {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        opacity: 0.035;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        background-size: 200px;
+      }
+
+      /* ─── NAV ─── */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        padding: 24px 60px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.4s;
+      }
+      nav.scrolled {
+        background: rgba(6, 6, 10, 0.92);
+        -webkit-backdrop-filter: blur(20px);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        padding: 16px 60px;
+      }
+      .nav-logo {
+        font-family: "Clash Display", sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--gold), var(--gold2));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.5px;
+        text-decoration: none;
+      }
+      .nav-links {
+        display: flex;
+        gap: 36px;
+        align-items: center;
+      }
+      .nav-links a {
+        color: var(--muted);
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: color 0.2s;
+        letter-spacing: 0.3px;
+        cursor: none;
+      }
+      .nav-links a:hover {
+        color: var(--text);
+      }
+      .nav-cta {
+        padding: 10px 24px;
+        border-radius: 100px;
+        background: transparent;
+        border: 1.5px solid var(--gold);
+        color: var(--gold);
+        font-family: "Cabinet Grotesk", sans-serif;
+        font-size: 0.88rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.2s;
+        cursor: none;
+        letter-spacing: 0.5px;
+      }
+      .nav-cta:hover {
+        background: var(--gold);
+        color: #000;
+      }
+
+      /* ─── SECTIONS ─── */
+      section {
+        position: relative;
+        z-index: 10;
+      }
+
+      /* ─── HERO ─── */
+      #hero {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 120px 40px 80px;
+        position: relative;
+      }
+      .hero-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 18px;
+        border-radius: 100px;
+        border: 1px solid var(--border-bright);
+        background: rgba(255, 180, 60, 0.06);
+        font-size: 0.75rem;
+        color: var(--gold);
+        font-family: "JetBrains Mono", monospace;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 36px;
+        animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      .hero-eyebrow::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--gold);
+        animation: blink 1.5s infinite;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.2;
+        }
+      }
+
+      .hero-name {
+        font-family: "Clash Display", sans-serif;
+        font-size: clamp(4rem, 10vw, 9rem);
+        font-weight: 700;
+        line-height: 0.92;
+        letter-spacing: -3px;
+        animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+      }
+      .hero-name .line1 {
+        display: block;
+        color: var(--text);
+      }
+      .hero-name .line2 {
+        display: block;
+        background: linear-gradient(
+          135deg,
+          var(--gold) 20%,
+          var(--gold2) 60%,
+          var(--cyan) 100%
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .hero-title-tag {
+        font-family: "Instrument Serif", serif;
+        font-style: italic;
+        font-size: clamp(1.1rem, 2vw, 1.5rem);
+        color: var(--muted);
+        margin: 20px 0 16px;
+        letter-spacing: 0.5px;
+        animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+      }
+      .hero-sub {
+        max-width: 600px;
+        font-size: 1.05rem;
+        color: var(--muted);
+        line-height: 1.7;
+        margin: 0 auto 48px;
+        animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.28s both;
+      }
+      .hero-actions {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+        animation: fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.36s both;
+      }
+      .btn-join {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 18px 44px;
+        border-radius: 100px;
+        background: linear-gradient(135deg, var(--gold), var(--gold2));
+        color: #000;
+        font-weight: 800;
+        font-size: 1rem;
+        text-decoration: none;
+        border: none;
+        cursor: none;
+        transition: all 0.25s;
+        letter-spacing: 0.3px;
+        box-shadow: 0 0 40px rgba(255, 180, 60, 0.25);
+      }
+      .btn-join:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 50px rgba(255, 180, 60, 0.4);
+      }
+      .btn-join .arrow {
+        transition: transform 0.2s;
+      }
+      .btn-join:hover .arrow {
+        transform: translateX(4px);
+      }
+      .btn-ghost-hero {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 18px 36px;
+        border-radius: 100px;
+        border: 1.5px solid var(--border-bright);
+        background: transparent;
+        color: var(--text);
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        cursor: none;
+        transition: all 0.2s;
+      }
+      .btn-ghost-hero:hover {
+        border-color: var(--gold);
+        color: var(--gold);
+      }
+
+      .hero-scroll {
+        position: absolute;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        animation: fadeUp 1s 0.7s both;
+      }
+      .hero-scroll span {
+        font-size: 0.7rem;
+        color: var(--muted2);
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        font-family: "JetBrains Mono", monospace;
+      }
+      .scroll-line {
+        width: 1px;
+        height: 48px;
+        background: linear-gradient(to bottom, var(--gold), transparent);
+        animation: scrollPulse 2s infinite;
+      }
+      @keyframes scrollPulse {
+        0% {
+          opacity: 0;
+          transform: scaleY(0);
+          transform-origin: top;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+          transform: scaleY(1);
+          transform-origin: top;
+        }
+      }
+
+      /* ─── MARQUEE ─── */
+      .marquee-wrap {
+        position: relative;
+        z-index: 10;
+        padding: 20px 0;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        overflow: hidden;
+        background: rgba(255, 180, 60, 0.03);
+      }
+      .marquee-track {
+        display: flex;
+        gap: 0;
+        white-space: nowrap;
+        animation: marquee 22s linear infinite;
+      }
+      .marquee-track span {
+        display: inline-flex;
+        align-items: center;
+        gap: 32px;
+        font-family: "Clash Display", sans-serif;
+        font-size: 0.8rem;
+        color: var(--muted2);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 0 32px;
+      }
+      .marquee-track span em {
+        color: var(--gold);
+        font-style: normal;
+        font-size: 1.2rem;
+      }
+      @keyframes marquee {
+        from {
+          transform: translateX(0);
+        }
+        to {
+          transform: translateX(-50%);
+        }
+      }
+
+      /* ─── ABOUT (now: Collaborators) ─── */
+      #about {
+        padding: 120px 60px;
+        max-width: 1300px;
+        margin: 0 auto;
+      }
+      .about-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.72rem;
+        color: var(--gold);
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .about-label::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--border-bright);
+      }
+      .about-heading {
+        font-family: "Clash Display", sans-serif;
+        font-size: clamp(2.4rem, 4vw, 3.8rem);
+        font-weight: 700;
+        line-height: 1.05;
+        letter-spacing: -1.5px;
+        margin-bottom: 16px;
+      }
+      .about-heading-sm {
+        font-size: clamp(1.8rem, 3vw, 2.5rem);
+        margin-bottom: 12px;
+      }
+      .about-heading em {
+        font-style: italic;
+        font-family: "Instrument Serif", serif;
+        font-weight: 400;
+        background: linear-gradient(90deg, var(--gold), var(--gold2));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .about-text {
+        font-size: 1.02rem;
+        color: var(--muted);
+        line-height: 1.78;
+        margin-bottom: 16px;
+      }
+      .mb-40 { margin-bottom: 40px; }
+      .mb-20 { margin-bottom: 20px; }
+      .about-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 28px;
+      }
+      .badge {
+        padding: 7px 16px;
+        border-radius: 8px;
+        background: rgba(255, 180, 60, 0.06);
+        border: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--muted);
+        font-family: "JetBrains Mono", monospace;
+        transition: all 0.2s;
+      }
+      .badge:hover {
+        border-color: var(--gold);
+        color: var(--gold);
+        background: rgba(255, 180, 60, 0.1);
+      }
+
+      /* About Section Layout */
+      .about-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+        margin-bottom: 140px;
+      }
+      .about-row.reverse {
+        direction: rtl;
+      }
+      .about-row.reverse > * {
+        direction: ltr;
+      }
+      @keyframes floatCard {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-15px); }
+        100% { transform: translateY(0px); }
+      }
+      @keyframes floatCardReverse {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(15px); }
+        100% { transform: translateY(0px); }
+      }
+      .floating-card {
+        animation: floatCard 6s ease-in-out infinite;
+      }
+      .floating-card-reverse {
+        animation: floatCardReverse 6s ease-in-out infinite;
+      }
+      .floating-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+      .floating-emoji {
+        font-size: 4rem;
+        margin-bottom: 20px;
+      }
+      .floating-title {
+        font-family: "Clash Display", sans-serif;
+        font-size: 1.8rem;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, var(--gold), var(--gold2));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .floating-text {
+        color: var(--muted);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 25px;
+      }
+      .floating-badges {
+        justify-content: center;
+        margin-top: 0;
+      }
+      
+      .collab-stats-card {
+        background: var(--surface);
+        -webkit-backdrop-filter: blur(20px);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 40px;
+        position: relative;
+        overflow: hidden;
+      }
+      .collab-stats-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(
+          90deg,
+          var(--gold),
+          var(--gold2),
+          var(--cyan)
+        );
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+      .stat {
+        padding: 20px;
+        background: rgba(255, 180, 60, 0.04);
+        border-radius: 14px;
+        border: 1px solid var(--border);
+      }
+      .stat-num {
+        font-family: "Clash Display", sans-serif;
+        font-size: 2.4rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--gold), var(--gold2));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1;
+      }
+      .stat-label {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      .about-quote {
+        margin-top: 24px;
+        padding: 24px;
+        background: rgba(0, 229, 255, 0.04);
+        border-radius: 14px;
+        border: 1px solid rgba(0, 229, 255, 0.1);
+        font-family: "Instrument Serif", serif;
+        font-style: italic;
+        font-size: 1.05rem;
+        color: var(--text);
+        line-height: 1.6;
+      }
+      .about-quote span {
+        display: block;
+        font-family: "Cabinet Grotesk", sans-serif;
+        font-style: normal;
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin-top: 10px;
+        letter-spacing: 1px;
+      }
+
+      /* Collaborator cards */
+      .collab-section-title {
+        font-family: "Clash Display", sans-serif;
+        font-size: clamp(1.8rem, 3vw, 2.6rem);
+        font-weight: 700;
+        letter-spacing: -1px;
+        margin-bottom: 12px;
+        text-align: center;
+      }
+      .collab-section-sub {
+        font-size: 1rem;
+        color: var(--muted);
+        text-align: center;
+        margin-bottom: 56px;
+        max-width: 560px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.65;
+      }
+      .collab-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+      }
+      .collab-card {
+        padding: 30px;
+        border-radius: 20px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s;
+      }
+      .collab-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--gold), var(--gold2));
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .collab-card:hover {
+        border-color: var(--border-bright);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+      }
+      .collab-card:hover::before {
+        opacity: 1;
+      }
+      .collab-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Clash Display", sans-serif;
+        font-weight: 700;
+        font-size: 1.3rem;
+        margin-bottom: 18px;
+        border: 1px solid var(--border);
+      }
+      .collab-name {
+        font-family: "Clash Display", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .collab-role {
+        font-size: 0.75rem;
+        color: var(--gold);
+        font-family: "JetBrains Mono", monospace;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 14px;
+      }
+      .collab-bio {
+        font-size: 0.87rem;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      .collab-skills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 16px;
+      }
+      .skill-tag {
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-family: "JetBrains Mono", monospace;
+        background: rgba(255, 180, 60, 0.06);
+        color: var(--muted);
+        border: 1px solid var(--border);
+      }
+
+      /* APPLY BANNER */
+      .apply-banner {
+        margin-top: 60px;
+        padding: 56px 40px;
+        border-radius: 24px;
+        background: var(--surface);
+        border: 1px solid var(--border-bright);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .apply-banner::before {
+        content: "";
+        position: absolute;
+        top: -80px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 400px;
+        height: 400px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 180, 60, 0.08),
+          transparent 70%
+        );
+        pointer-events: none;
+      }
+      .apply-banner-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.72rem;
+        color: var(--gold);
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+      }
+      .apply-banner-heading {
+        font-family: "Clash Display", sans-serif;
+        font-size: clamp(2rem, 3.5vw, 3rem);
+        font-weight: 700;
+        letter-spacing: -1px;
+        margin-bottom: 16px;
+      }
+      .apply-banner-sub {
+        font-size: 1rem;
+        color: var(--muted);
+        line-height: 1.65;
+        margin-bottom: 36px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .btn-apply {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 18px 48px;
+        border-radius: 100px;
+        background: linear-gradient(135deg, var(--gold), var(--gold2));
+        color: #000;
+        font-weight: 800;
+        font-size: 1.05rem;
+        text-decoration: none;
+        cursor: none;
+        transition: all 0.25s;
+        box-shadow: 0 0 40px rgba(255, 180, 60, 0.25);
+      }
+      .btn-apply:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 50px rgba(255, 180, 60, 0.45);
+      }
+
+      /* ─── PLATFORM ─── */
+      #platform {
+        padding: 120px 60px;
+        border-top: 1px solid var(--border);
+      }
+      .section-header {
+        text-align: center;
+        max-width: 700px;
+        margin: 0 auto 80px;
+      }
+      .section-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.72rem;
+        color: var(--gold);
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+        display: block;
+      }
+      .section-heading {
+        font-family: "Clash Display", sans-serif;
+        font-size: clamp(2.2rem, 4vw, 3.5rem);
+        font-weight: 700;
+        line-height: 1.08;
+        letter-spacing: -1.5px;
+        margin-bottom: 16px;
+      }
+      .section-sub {
+        font-size: 1.02rem;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .features-grid {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      .feature-card {
+        padding: 36px 30px;
+        border-radius: 20px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s;
+        cursor: default;
+      }
+      .feature-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+          rgba(255, 180, 60, 0.05),
+          transparent 40%
+        );
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+      }
+      .feature-card:hover::after {
+        opacity: 1;
+      }
+      .feature-card:hover {
+        border-color: var(--border-bright);
+        transform: translateY(-4px);
+      }
+      .feature-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+        background: rgba(255, 180, 60, 0.08);
+        border: 1px solid var(--border);
+      }
+      .feature-title {
+        font-family: "Clash Display", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+      .feature-desc {
+        font-size: 0.9rem;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+      .feature-tag {
+        display: inline-block;
+        margin-top: 16px;
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-family: "JetBrains Mono", monospace;
+        background: rgba(255, 180, 60, 0.06);
+        color: var(--gold);
+        border: 1px solid var(--border);
+      }
+
+      /* ─── CONTACT ─── */
+      #contact {
+        padding: 120px 60px;
+        border-top: 1px solid var(--border);
+      }
+      .contact-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: start;
+      }
+      .contact-heading {
+        font-family: "Clash Display", sans-serif;
+        font-size: clamp(2.4rem, 4vw, 3.6rem);
+        font-weight: 700;
+        line-height: 1.05;
+        letter-spacing: -1.5px;
+        margin-bottom: 20px;
+      }
+      .contact-heading em {
+        font-family: "Instrument Serif", serif;
+        font-style: italic;
+        font-weight: 400;
+        background: linear-gradient(90deg, var(--gold), var(--gold2));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .contact-sub {
+        font-size: 1rem;
+        color: var(--muted);
+        line-height: 1.7;
+        margin-bottom: 40px;
+      }
+      .contact-links {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .contact-link {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 20px 24px;
+        border-radius: 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        text-decoration: none;
+        color: var(--text);
+        transition: all 0.25s;
+        cursor: none;
+      }
+      .contact-link:hover {
+        border-color: var(--border-bright);
+        transform: translateX(6px);
+      }
+      .contact-link:hover .contact-link-icon {
+        background: var(--gold);
+        color: #000;
+      }
+      .contact-link-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        background: rgba(255, 180, 60, 0.08);
+        border: 1px solid var(--border);
+        flex-shrink: 0;
+        transition: all 0.2s;
+      }
+      .contact-link-label {
+        font-size: 0.75rem;
+        color: var(--muted);
+        font-family: "JetBrains Mono", monospace;
+        letter-spacing: 1px;
+        margin-bottom: 3px;
+      }
+      .contact-link-value {
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+
+      .join-box {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 48px 40px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .join-box::before {
+        content: "";
+        position: absolute;
+        top: -60px;
+        right: -60px;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 180, 60, 0.12),
+          transparent 70%
+        );
+      }
+      .join-box-title {
+        font-family: "Clash Display", sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        margin-bottom: 12px;
+      }
+      .join-box-sub {
+        font-size: 0.92rem;
+        color: var(--muted);
+        line-height: 1.6;
+        margin-bottom: 32px;
+      }
+      .btn-join-big {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 40px;
+        border-radius: 100px;
+        background: linear-gradient(135deg, var(--gold), var(--gold2));
+        color: #000;
+        font-weight: 800;
+        font-size: 0.95rem;
+        text-decoration: none;
+        cursor: none;
+        transition: all 0.25s;
+        box-shadow: 0 0 40px rgba(255, 180, 60, 0.2);
+      }
+      .btn-join-big:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 50px rgba(255, 180, 60, 0.4);
+      }
+      .join-tags {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 24px;
+        flex-wrap: wrap;
+      }
+      .apply-link {
+        display: block;
+        margin-top: 16px;
+        font-size: 0.82rem;
+        color: var(--muted);
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .apply-link:hover {
+        color: var(--gold);
+      }
+
+      /* ─── FOOTER ─── */
+      footer {
+        padding: 40px 60px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        z-index: 10;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      .footer-logo {
+        font-family: "Clash Display", sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--gold), var(--gold2));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .footer-copy {
+        font-size: 0.8rem;
+        color: var(--muted2);
+      }
+      .footer-links {
+        display: flex;
+        gap: 24px;
+      }
+      .footer-links a {
+        font-size: 0.82rem;
+        color: var(--muted);
+        text-decoration: none;
+        cursor: none;
+        transition: color 0.2s;
+      }
+      .footer-links a:hover {
+        color: var(--gold);
+      }
+
+      /* ─── ANIMATIONS ─── */
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .reveal {
+        opacity: 0;
+        transform: translateY(40px);
+        transition:
+          opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+          transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal-left {
+        opacity: 0;
+        transform: translateX(-60px) rotate(-2deg);
+        transition:
+          opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+          transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal-right {
+        opacity: 0;
+        transform: translateX(60px) rotate(2deg);
+        transition:
+          opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+          transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal.in,
+      .reveal-left.in,
+      .reveal-right.in {
+        opacity: 1;
+        transform: translate(0) rotate(0);
+      }
+      .reveal-delay-1 { transition-delay: 0.1s; }
+      .reveal-delay-2 { transition-delay: 0.2s; }
+      .reveal-delay-3 { transition-delay: 0.3s; }
+      .reveal-delay-4 { transition-delay: 0.4s; }
+      .reveal-delay-5 { transition-delay: 0.5s; }
+      
+      .st-1300 { max-width: 1300px; margin: 0 auto; }
+      .d-block-mb-16 { display: block; margin-bottom: 16px; }
+      .ml-auto-mut-1 { margin-left: auto; color: var(--muted); font-size: 1rem; }
+      
+      .text-grad-gold {
+        font-family: "Instrument Serif", serif;
+        font-style: italic;
+        background: linear-gradient(90deg, var(--gold), var(--gold2));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .collab-avatar-gold {
+        background: linear-gradient(135deg, rgba(255, 180, 60, 0.15), rgba(255, 124, 42, 0.1));
+      }
+      .collab-avatar-cyan {
+        background: linear-gradient(135deg, rgba(0, 229, 255, 0.12), rgba(96, 130, 232, 0.1));
+      }
+      .collab-avatar-green {
+        background: linear-gradient(135deg, rgba(52, 211, 153, 0.12), rgba(16, 185, 129, 0.1));
+      }
+      .w-100-max-1300 { width: 100%; max-width: 1300px; margin: 0 auto; }
+
+      /* ─── RESPONSIVE ─── */
+      @media (max-width: 900px) {
+        nav {
+          padding: 20px 24px;
+        }
+        nav.scrolled {
+          padding: 14px 24px;
+        }
+        .nav-links {
+          display: none;
+        }
+        .about-row {
+          grid-template-columns: 1fr;
+          gap: 40px;
+          margin-bottom: 80px;
+        }
+        .about-row.reverse {
+          direction: ltr; /* Reset reverse direction on mobile */
+        }
+        #contact .contact-inner {
+          grid-template-columns: 1fr;
+          gap: 40px;
+        }
+        .features-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        #platform,
+        #about,
+        #contact {
+          padding: 80px 24px;
+        }
+        footer {
+          padding: 32px 24px;
+        }
+        .collab-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 600px) {
+        .features-grid {
+          grid-template-columns: 1fr;
+        }
+        .hero-name {
+          letter-spacing: -2px;
+        }
+        .collab-grid {
+          grid-template-columns: 1fr;
+        }
+        .apply-banner {
+          padding: 36px 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- CURSOR -->
+    <div id="cursor"></div>
+    <div id="cursor-ring"></div>
+
+    <!-- GRAIN -->
+    <div class="grain"></div>
+
+    <!-- THREE.JS BG -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- NAV -->
+    <nav id="nav">
+      <a href="#" class="nav-logo">HAZA</a>
+      <div class="nav-links">
+        <a href="#about">Collaborators</a>
+        <a href="#platform">Platform</a>
+        <a href="#contact">Contact</a>
+        <a href="login.html" class="nav-cta">Team Login →</a>
+      </div>
+    </nav>
+
+    <!-- ─── HERO ─── -->
+    <section id="hero">
+      <div class="hero-eyebrow">
+        <span>●</span> HAZA Collaborators · Private Team Platform
+      </div>
+      <h1 class="hero-name">
+        <span class="line1">HAZA</span>
+        <span class="line2">Collaborators</span>
+      </h1>
+      <p class="hero-title-tag">Where Great Teams Build the Future Together</p>
+      <p class="hero-sub">
+        A private, invite-only workspace for HAZA's creators, developers, and
+        designers. We collaborate, communicate, and ship remarkable projects —
+        together.
+      </p>
+      <div class="hero-actions">
+        <a href="#contact" class="btn-join">
+          Join the Team <span class="arrow">→</span>
+        </a>
+        <a href="#about" class="btn-ghost-hero">Meet the Team ↓</a>
+      </div>
+      <div class="hero-scroll">
+        <span>Scroll</span>
+        <div class="scroll-line"></div>
+      </div>
+    </section>
+
+    <!-- ─── MARQUEE ─── -->
+    <div class="marquee-wrap">
+      <div class="marquee-track">
+        <span
+          >Web Development <em>·</em> Mobile Apps <em>·</em> Desktop Apps
+          <em>·</em> UI/UX Design <em>·</em> Full Stack <em>·</em> Graphic
+          Design <em>·</em> Richmond College <em>·</em> Galle, Sri Lanka
+          <em>·</em> nas.io/kdj <em>·</em> Invite Only <em>·</em></span
+        >
+        <span
+          >Web Development <em>·</em> Mobile Apps <em>·</em> Desktop Apps
+          <em>·</em> UI/UX Design <em>·</em> Full Stack <em>·</em> Graphic
+          Design <em>·</em> Richmond College <em>·</em> Galle, Sri Lanka
+          <em>·</em> nas.io/kdj <em>·</em> Invite Only <em>·</em></span
+        >
+      </div>
+    </div>
+
+    <!-- ─── ABOUT / COLLABORATORS ─── -->
+    <section id="about">
+      <div class="st-1300">
+        <!-- Row 1: The Visionary -->
+        <div class="about-row">
+          <div class="reveal-left">
+            <div class="about-label">The Visionary</div>
+            <h2 class="about-heading about-heading-sm reveal-delay-1">
+              The Vision Behind <em>HAZA</em>
+            </h2>
+            <p class="about-text mb-40 reveal-delay-2">
+              "Hi, I'm Janma Hasarel, the Founder of HAZA. My journey into tech began at Richmond College in Galle, Sri Lanka, and evolved into a deep passion for software architecture. I honed my expertise as a Full Stack Developer—spanning across Web, Web App, Desktop, Mobile App development, and Graphic Design—with invaluable guidance and skills learned from KD Jayakody at the 'nas.io/kdj' community.<br><br>
+              Instead of just building projects solo, my vision with HAZA is to bring together the brightest minds to engineer production-ready, highly scalable systems that solve real-world problems. We are here to disrupt the ordinary."
+            </p>
+          </div>
+          <div class="collab-stats-card reveal-right reveal-delay-2 floating-card">
+            <div class="stat-grid">
+              <div class="stat">
+                <div class="stat-num">4+</div>
+                <div class="stat-label">Platforms Covered</div>
+              </div>
+              <div class="stat">
+                <div class="stat-num">∞</div>
+                <div class="stat-label">Ideas to Build</div>
+              </div>
+              <div class="stat">
+                <div class="stat-num">1</div>
+                <div class="stat-label">Founder — Janma</div>
+              </div>
+              <div class="stat">
+                <div class="stat-num">LK</div>
+                <div class="stat-label">Based in Sri Lanka</div>
+              </div>
+            </div>
+            <div class="about-quote">
+              "We don't just build software — we build futures. Every line of
+              code, every pixel, every idea matters."
+              <span>— Janma Hasarel, Founder of HAZA</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: The Elite Squad -->
+        <div class="about-row reverse">
+          <div class="reveal-right">
+            <div class="about-label">The Elite Squad</div>
+            <h2 class="about-heading about-heading-sm reveal-delay-1">
+              Meet the <em>HAZA Collaborators</em>
+            </h2>
+            <p class="about-text mb-40 reveal-delay-2">
+              "HAZA Collaborators is not just a community; it is a handpicked, elite squad of dedicated Developers, Designers, and Tech Enthusiasts. We operate on a unified mission: to build robust, cross-platform ecosystems from the ground up.<br><br>
+              Currently in our Early Access phase and officially launching team-wide operations this March, our collaborators gain hands-on, production-level experience working with modern, complex tech stacks. We believe in synergy—combining individual brilliance to construct future-proof software."
+            </p>
+          </div>
+          <div class="collab-stats-card reveal-left reveal-delay-2 floating-card-reverse floating-content">
+             <div class="floating-emoji">🤝</div>
+             <h3 class="floating-title">Elite Synergy</h3>
+             <p class="floating-text">
+               Every member brings unique expertise to the table, creating a diverse powerhouse of talent.
+             </p>
+             <div class="about-badges floating-badges">
+               <span class="badge">Invite Only</span>
+               <span class="badge">Top Talent</span>
+               <span class="badge">Team First</span>
+               <span class="badge">Synergy</span>
+             </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Our Engineering Focus -->
+        <div class="about-row">
+          <div class="reveal-left">
+            <div class="about-label">Our Engineering Focus</div>
+            <h2 class="about-heading about-heading-sm reveal-delay-1">
+              Engineering <em>High-Impact</em> Solutions
+            </h2>
+            <p class="about-text mb-20 reveal-delay-2">
+              "We focus on creating solutions that people actually need. From Cross-Platform Ecosystems to Advanced Data Architectures, the HAZA team is currently working on specialized, market-disrupting projects. We prioritize seamless User Experiences (UX), clean codebases, and scalable backends to ensure every product we deploy is nothing short of exceptional."
+            </p>
+            <div class="about-badges reveal-delay-4">
+              <span class="badge">Full Stack Dev</span>
+              <span class="badge">Graphic Design</span>
+              <span class="badge">UI / UX</span>
+              <span class="badge">Mobile Apps</span>
+              <span class="badge">Desktop Apps</span>
+              <span class="badge">Richmond College</span>
+              <span class="badge">nas.io/kdj</span>
+            </div>
+          </div>
+          <div class="collab-stats-card reveal-right reveal-delay-2 floating-card floating-content">
+             <div class="floating-emoji">🚀</div>
+             <h3 class="floating-title">Modern <em class="text-grad-gold">Stacks</em></h3>
+             <p class="floating-text">
+               We embrace the latest technologies to ship products faster without compromising quality or scalability.
+             </p>
+             <div class="about-badges floating-badges">
+               <span class="badge">Firebase</span>
+               <span class="badge">Scalable</span>
+               <span class="badge">Production-Ready</span>
+             </div>
+          </div>
+        </div>
+
+        <!-- Team Members -->
+        <div class="reveal">
+          <div class="collab-section-title">
+            Meet the
+            <em class="text-grad-gold">HAZA Team</em>
+          </div>
+          <p class="collab-section-sub">
+            A collective of builders, designers, and dreamers — united by
+            purpose and passion.
+          </p>
+        </div>
+
+        <div class="collab-grid">
+          <!-- Janma Hasarel - Founder -->
+          <div class="collab-card reveal">
+            <div class="collab-avatar collab-avatar-gold">👑</div>
+            <div class="collab-name">Janma Hasarel</div>
+            <div class="collab-role">Founder & Full Stack Developer</div>
+            <div class="collab-bio">
+              The architect of HAZA. Janma leads the team with expertise in web,
+              mobile, desktop and app development, graphic design, and UI/UX.
+              Richmond College alumnus, Galle.
+            </div>
+            <div class="collab-skills">
+              <span class="skill-tag">Full Stack</span>
+              <span class="skill-tag">UI/UX</span>
+              <span class="skill-tag">Mobile Dev</span>
+              <span class="skill-tag">Graphic Design</span>
+              <span class="skill-tag">Admin</span>
+            </div>
+          </div>
+
+          <!-- Placeholder cards - these will show the team's presence -->
+          <div class="collab-card reveal reveal-delay-1">
+            <div
+              class="collab-avatar"
+              style="
+                background: linear-gradient(
+                  135deg,
+                  rgba(0, 229, 255, 0.12),
+                  rgba(96, 130, 232, 0.1)
+                );
+              "
+            >
+              💻
+            </div>
+            <div class="collab-name">Team Developer</div>
+            <div class="collab-role">Frontend / Backend Developer</div>
+            <div class="collab-bio">
+              HAZA team members contribute their development expertise to build
+              robust, scalable applications across multiple platforms.
+            </div>
+            <div class="collab-skills">
+              <span class="skill-tag">React</span>
+              <span class="skill-tag">Node.js</span>
+              <span class="skill-tag">Firebase</span>
+            </div>
+          </div>
+
+          <div class="collab-card reveal reveal-delay-2">
+            <div class="collab-avatar collab-avatar-cyan">🎨</div>
+            <div class="collab-name">Team Designer</div>
+            <div class="collab-role">UI / UX & Graphic Designer</div>
+            <div class="collab-bio">
+              Our designers craft beautiful, intuitive experiences and visual
+              assets that make HAZA products stand out from the crowd.
+            </div>
+            <div class="collab-skills">
+              <span class="skill-tag">Figma</span>
+              <span class="skill-tag">Photoshop</span>
+              <span class="skill-tag">Motion</span>
+            </div>
+          </div>
+
+          <div class="collab-card reveal reveal-delay-1">
+            <div class="collab-avatar collab-avatar-green">📱</div>
+            <div class="collab-name">Mobile Specialist</div>
+            <div class="collab-role">Mobile App Developer</div>
+            <div class="collab-bio">
+              HAZA's mobile team builds seamless cross-platform applications for
+              Android and iOS, bringing our products to users everywhere.
+            </div>
+            <div class="collab-skills">
+              <span class="skill-tag">Flutter</span>
+              <span class="skill-tag">React Native</span>
+              <span class="skill-tag">Android</span>
+            </div>
+          </div>
+
+          <div class="collab-card reveal reveal-delay-2">
+            <div
+              class="collab-avatar"
+              style="
+                background: linear-gradient(
+                  135deg,
+                  rgba(251, 191, 36, 0.12),
+                  rgba(249, 115, 22, 0.1)
+                );
+              "
+            >
+              🖥️
+            </div>
+            <div class="collab-name">Desktop Engineer</div>
+            <div class="collab-role">Desktop App Developer</div>
+            <div class="collab-bio">
+              Building powerful desktop experiences using Electron, Tauri and
+              native SDKs — bringing HAZA's vision to the desktop platform.
+            </div>
+            <div class="collab-skills">
+              <span class="skill-tag">Electron</span>
+              <span class="skill-tag">Tauri</span>
+              <span class="skill-tag">C#</span>
+            </div>
+          </div>
+
+          <!-- Apply CTA Card -->
+          <div
+            class="collab-card reveal reveal-delay-3"
+            style="
+              border-style: dashed;
+              border-color: var(--border-bright);
+              background: rgba(255, 180, 60, 0.03);
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              text-align: center;
+              gap: 14px;
+              min-height: 220px;
+            "
+          >
+            <div style="font-size: 2rem; opacity: 0.5">✦</div>
+            <div class="collab-name" style="font-size: 1rem">
+              Your Spot Awaits
+            </div>
+            <div class="collab-bio" style="font-size: 0.83rem">
+              Think you have what it takes to join HAZA? Apply through our form
+              and the admin will review your application.
+            </div>
+            <a
+              href="https://forms.gle/YvWPp2L3M3nQ1hmj7"
+              target="_blank"
+              rel="noopener"
+              style="
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 24px;
+                border-radius: 100px;
+                border: 1.5px solid var(--border-bright);
+                color: var(--gold);
+                font-size: 0.85rem;
+                font-weight: 700;
+                text-decoration: none;
+                transition: all 0.2s;
+                cursor: none;
+                font-family: &quot;Cabinet Grotesk&quot;, sans-serif;
+              "
+              >Apply Now →</a
+            >
+          </div>
+        </div>
+
+        <!-- Apply Banner -->
+        <div class="apply-banner reveal" style="margin-top: 60px">
+          <div class="apply-banner-label">Join the Team</div>
+          <h2 class="apply-banner-heading">
+            Ready to Collaborate<br />with
+            <em
+              style="
+                font-family: &quot;Instrument Serif&quot;, serif;
+                font-style: italic;
+                background: linear-gradient(90deg, var(--gold), var(--gold2));
+                -webkit-background-clip: text;
+                background-clip: text;
+                -webkit-text-fill-color: transparent;
+              "
+              >HAZA?</em
+            >
+          </h2>
+          <p class="apply-banner-sub">
+            We hand-pick talented individuals who share our passion for building
+            great things. Fill in our apply form to get started — access is
+            granted by the admin.
+          </p>
+          <a
+            href="https://forms.gle/YvWPp2L3M3nQ1hmj7"
+            target="_blank"
+            rel="noopener"
+            class="btn-apply"
+          >
+            Apply to Join HAZA <span>→</span>
+          </a>
+          <div
+            style="
+              margin-top: 16px;
+              font-size: 0.8rem;
+              color: var(--muted2);
+              font-family: &quot;JetBrains Mono&quot;, monospace;
+            "
+          >
+            Already have credentials?
+            <a
+              href="login.html"
+              style="color: var(--gold); text-decoration: none"
+              >Sign In →</a
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── PLATFORM ─── -->
+    <section id="platform">
+      <div class="section-header">
+        <span class="section-label reveal">The Platform</span>
+        <h2 class="section-heading reveal reveal-delay-1">
+          Everything Your Team Needs
+        </h2>
+        <p class="section-sub reveal reveal-delay-2">
+          HAZA Collaborators is a private team space built for creators,
+          developers, and designers to collaborate, communicate, and ship
+          together — powered by Firebase.
+        </p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card reveal">
+          <div class="feature-icon">💬</div>
+          <div class="feature-title">Real-Time Team Chat</div>
+          <div class="feature-desc">
+            Instant messaging for the whole team powered by Firebase Realtime
+            Database. Stay connected and move fast.
+          </div>
+          <span class="feature-tag">Firebase RT</span>
+        </div>
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon">📋</div>
+          <div class="feature-title">Team Feed</div>
+          <div class="feature-desc">
+            Post updates, announcements, and insights. Keep everyone on the same
+            page with a live activity feed.
+          </div>
+          <span class="feature-tag">Firestore</span>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon">🗂️</div>
+          <div class="feature-title">Project Spaces</div>
+          <div class="feature-desc">
+            Dedicated spaces per project — with isolated chat and update feeds.
+            Keep every project organized and focused.
+          </div>
+          <span class="feature-tag">Organized</span>
+        </div>
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon">🔐</div>
+          <div class="feature-title">Admin-Managed Access</div>
+          <div class="feature-desc">
+            Admin generates credentials. Members apply via form and get email +
+            password once approved. Fully controlled access.
+          </div>
+          <span class="feature-tag">Secure</span>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon">⚙️</div>
+          <div class="feature-title">Admin Panel</div>
+          <div class="feature-desc">
+            Add or remove team members, assign roles, and manage credentials —
+            all from a clean, powerful admin dashboard.
+          </div>
+          <span class="feature-tag">Admin Only</span>
+        </div>
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-icon">🚀</div>
+          <div class="feature-title">Built by HAZA</div>
+          <div class="feature-desc">
+            Crafted in-house by Janma Hasarel. Every pixel, every feature —
+            purpose-built for how HAZA teams actually work.
+          </div>
+          <span class="feature-tag">Custom Built</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── CONTACT ─── -->
+    <section id="contact">
+      <div class="contact-inner">
+        <div class="reveal-left">
+          <span class="section-label d-block-mb-16">Get In Touch</span>
+          <h2 class="contact-heading reveal-delay-1">
+            Let's Build<br /><em>Something</em><br />Together
+          </h2>
+          <p class="contact-sub reveal-delay-2">
+            Want to collaborate or join the HAZA team? Reach out on any platform
+            below, or fill in the apply form.
+          </p>
+          <div class="contact-links">
+            <a
+              href="https://wa.me/94771315403"
+              target="_blank"
+              rel="noopener"
+              class="contact-link reveal-delay-2"
+            >
+              <div class="contact-link-icon">📱</div>
+              <div class="contact-link-info">
+                <div class="contact-link-label">WhatsApp</div>
+                <div class="contact-link-value">+94 77 131 5403</div>
+              </div>
+              <span class="ml-auto-mut-1">↗</span>
+            </a>
+            <a
+              href="https://github.com/hazasite"
+              target="_blank"
+              rel="noopener"
+              class="contact-link reveal-delay-3"
+            >
+              <div class="contact-link-icon">🐙</div>
+              <div class="contact-link-info">
+                <div class="contact-link-label">GitHub</div>
+                <div class="contact-link-value">github.com/hazasite</div>
+              </div>
+              <span class="ml-auto-mut-1">↗</span>
+            </a>
+            <a
+              href="https://nas.io/kdj"
+              target="_blank"
+              rel="noopener"
+              class="contact-link reveal-delay-4"
+            >
+              <div class="contact-link-icon">🧠</div>
+              <div class="contact-link-info">
+                <div class="contact-link-label">Community / Mentor</div>
+                <div class="contact-link-value">nas.io/kdj — KD Jayakody</div>
+              </div>
+              <span
+                style="margin-left: auto; color: var(--muted); font-size: 1rem"
+                >↗</span
+              >
+            </a>
+          </div>
+        </div>
+
+        <div class="join-box reveal reveal-delay-2">
+          <div style="font-size: 2.5rem; margin-bottom: 16px">🔐</div>
+          <div class="join-box-title">Ready to Collaborate?</div>
+          <div class="join-box-sub">
+            HAZA Collaborators is a private platform. Access is granted by the
+            admin after reviewing your application. Apply via the form below,
+            then sign in with your credentials.
+          </div>
+          <a href="login.html" class="btn-join-big">
+            Sign In to Team Space →
+          </a>
+          <a
+            href="https://forms.gle/YvWPp2L3M3nQ1hmj7"
+            target="_blank"
+            rel="noopener"
+            class="apply-link"
+          >
+            📝 Apply to Join HAZA →
+          </a>
+          <div class="join-tags">
+            <span class="badge" style="font-size: 0.72rem">Invite Only</span>
+            <span class="badge" style="font-size: 0.72rem"
+              >Admin Generated Login</span
+            >
+            <span class="badge" style="font-size: 0.72rem"
+              >Role Based Access</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── FOOTER ─── -->
+    <footer>
+      <div class="footer-logo">HAZA</div>
+      <div class="footer-copy">
+        © 2025 Janma Hasarel · HAZA. All rights reserved.
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/hazasite" target="_blank">GitHub</a>
+        <a href="https://wa.me/94771315403" target="_blank">WhatsApp</a>
+        <a href="https://forms.gle/YvWPp2L3M3nQ1hmj7" target="_blank">Apply</a>
+        <a href="login.html">Team Login</a>
+      </div>
+    </footer>
+
+    <script>
+      /* ─── CURSOR ─── */
+      const cursor = document.getElementById("cursor");
+      const ring = document.getElementById("cursor-ring");
+      let rx = 0,
+        ry = 0,
+        cx = 0,
+        cy = 0;
+      document.addEventListener("mousemove", (e) => {
+        cx = e.clientX;
+        cy = e.clientY;
+        cursor.style.left = cx + "px";
+        cursor.style.top = cy + "px";
+      });
+      (function animRing() {
+        rx += (cx - rx) * 0.12;
+        ry += (cy - ry) * 0.12;
+        ring.style.left = rx + "px";
+        ring.style.top = ry + "px";
+        requestAnimationFrame(animRing);
+      })();
+
+      /* ─── NAV SCROLL ─── */
+      const nav = document.getElementById("nav");
+      window.addEventListener("scroll", () =>
+        nav.classList.toggle("scrolled", window.scrollY > 40),
+      );
+
+      /* ─── THREE.JS ─── */
+      (function () {
+        const canvas = document.getElementById("bg-canvas");
+        const renderer = new THREE.WebGLRenderer({
+          canvas,
+          antialias: true,
+          alpha: true,
+        });
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        renderer.setSize(innerWidth, innerHeight);
+        const scene = new THREE.Scene();
+        const cam = new THREE.PerspectiveCamera(
+          65,
+          innerWidth / innerHeight,
+          0.1,
+          1000,
+        );
+        cam.position.z = 60;
+
+        /* Floating torus rings */
+        const rings = [];
+        const ringGeo = [
+          new THREE.TorusGeometry(14, 0.06, 8, 80),
+          new THREE.TorusGeometry(22, 0.04, 8, 80),
+          new THREE.TorusGeometry(32, 0.03, 8, 80),
+        ];
+        const ringMat = [
+          new THREE.MeshBasicMaterial({
+            color: 0xffb43c,
+            transparent: true,
+            opacity: 0.15,
+          }),
+          new THREE.MeshBasicMaterial({
+            color: 0xff7c2a,
+            transparent: true,
+            opacity: 0.1,
+          }),
+          new THREE.MeshBasicMaterial({
+            color: 0x00e5ff,
+            transparent: true,
+            opacity: 0.06,
+          }),
+        ];
+        ringGeo.forEach((g, i) => {
+          const m = new THREE.Mesh(g, ringMat[i]);
+          m.rotation.x = Math.PI / 4 + i * 0.3;
+          scene.add(m);
+          rings.push(m);
+        });
+
+        /* Particles */
+        const N = 600;
+        const geo = new THREE.BufferGeometry();
+        const pos = new Float32Array(N * 3);
+        const col = new Float32Array(N * 3);
+        for (let i = 0; i < N; i++) {
+          pos[i * 3] = (Math.random() - 0.5) * 200;
+          pos[i * 3 + 1] = (Math.random() - 0.5) * 200;
+          pos[i * 3 + 2] = (Math.random() - 0.5) * 80;
+          const t = Math.random();
+          if (t < 0.6) {
+            col[i * 3] = 1;
+            col[i * 3 + 1] = 0.7;
+            col[i * 3 + 2] = 0.23;
+          } else if (t < 0.85) {
+            col[i * 3] = 1;
+            col[i * 3 + 1] = 0.49;
+            col[i * 3 + 2] = 0.16;
+          } else {
+            col[i * 3] = 0;
+            col[i * 3 + 1] = 0.9;
+            col[i * 3 + 2] = 1;
+          }
+        }
+        geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+        geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+        const pmat = new THREE.PointsMaterial({
+          size: 0.45,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.5,
+        });
+        scene.add(new THREE.Points(geo, pmat));
+
+        let mx = 0,
+          my = 0;
+        document.addEventListener("mousemove", (e) => {
+          mx = (e.clientX / innerWidth - 0.5) * 0.5;
+          my = -(e.clientY / innerHeight - 0.5) * 0.5;
+        });
+
+        (function anim() {
+          requestAnimationFrame(anim);
+          const t = Date.now() * 0.0003;
+          rings.forEach((r, i) => {
+            r.rotation.z = t * (0.15 + i * 0.07);
+            r.rotation.y = t * 0.05 + mx * 0.3;
+            r.rotation.x = Math.PI / 4 + i * 0.3 + my * 0.2;
+          });
+          cam.position.x += (mx * 6 - cam.position.x) * 0.04;
+          cam.position.y += (my * 6 - cam.position.y) * 0.04;
+          cam.lookAt(0, 0, 0);
+          renderer.render(scene, cam);
+        })();
+
+        window.addEventListener("resize", () => {
+          cam.aspect = innerWidth / innerHeight;
+          cam.updateProjectionMatrix();
+          renderer.setSize(innerWidth, innerHeight);
+        });
+      })();
+
+      /* ─── SCROLL REVEAL ─── */
+      const obs = new IntersectionObserver(
+        (entries) =>
+          entries.forEach((e) => {
+            if (e.isIntersecting) e.target.classList.add("in");
+          }),
+        { threshold: 0.08 },
+      );
+      document.querySelectorAll(".reveal, .reveal-left, .reveal-right").forEach((el) => obs.observe(el));
+
+      /* ─── FEATURE CARD MOUSE GLOW ─── */
+      document.querySelectorAll(".feature-card").forEach((card) => {
+        card.addEventListener("mousemove", (e) => {
+          const r = card.getBoundingClientRect();
+          card.style.setProperty("--mouse-x", e.clientX - r.left + "px");
+          card.style.setProperty("--mouse-y", e.clientY - r.top + "px");
+        });
+      });
+    </script>
+  </body>
+</html>

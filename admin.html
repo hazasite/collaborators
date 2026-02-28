@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Admin Panel — HAZA Collaborators</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#06060a;
+  --surface:rgba(12,14,22,0.94);
+  --surface2:rgba(14,16,26,0.88);
+  --surface3:rgba(18,20,32,0.65);
+  --border:rgba(255,180,60,0.1);
+  --border-bright:rgba(255,180,60,0.25);
+  --gold:#ffb43c;
+  --gold2:#ff7c2a;
+  --gold-dim:rgba(255,180,60,0.08);
+  --cyan:#00e5ff;
+  --green:#34d399;
+  --red:#f87171;
+  --amber:#fbbf24;
+  --text:#f0ece4;
+  --text-dim:#c8c2b8;
+  --muted:#7a7568;
+  --muted2:#504d46;
+  --sidebar:248px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Cabinet Grotesk',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--muted2);border-radius:2px;}
+::-webkit-scrollbar-thumb:hover{background:var(--gold);}
+
+/* ─── LAYOUT ─── */
+#app{position:fixed;inset:0;z-index:10;display:flex;animation:fadeIn 0.4s both;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+
+/* SIDEBAR */
+#sidebar{
+  width:var(--sidebar);height:100vh;flex-shrink:0;
+  background:rgba(6,6,10,0.98);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:20;
+}
+.sb-brand{padding:20px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.sb-mark{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Clash Display',sans-serif;font-weight:700;font-size:0.9rem;color:#000;
+}
+.sb-brand-name{font-family:'Clash Display',sans-serif;font-weight:700;font-size:0.95rem;color:var(--text);line-height:1.15;letter-spacing:-0.3px;}
+.sb-brand-sub{font-size:0.68rem;color:var(--gold);font-family:'JetBrains Mono',monospace;}
+
+.sb-nav{flex:1;overflow-y:auto;padding:12px 10px;}
+.sb-section{padding:10px 8px 4px;font-size:0.63rem;color:var(--muted2);letter-spacing:2px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;}
+.sb-item{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 10px;margin:1px 0;border-radius:9px;
+  cursor:pointer;transition:all 0.15s;color:var(--muted);font-size:0.86rem;font-weight:500;
+  border:1px solid transparent;text-decoration:none;
+}
+.sb-item:hover{background:var(--gold-dim);color:var(--text-dim);}
+.sb-item.active{background:rgba(255,180,60,0.12);color:var(--gold);border-color:var(--border);}
+.sb-item .si-icon{width:22px;text-align:center;font-size:0.95rem;flex-shrink:0;}
+
+.sb-footer{padding:14px;border-top:1px solid var(--border);}
+.sb-user{
+  display:flex;align-items:center;gap:10px;
+  padding:10px;border-radius:10px;
+  background:var(--gold-dim);border:1px solid var(--border-bright);
+}
+.sb-avatar{
+  width:34px;height:34px;border-radius:9px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Clash Display',sans-serif;font-weight:700;font-size:0.8rem;color:#000;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+}
+.sb-user-name{font-size:0.84rem;font-weight:700;line-height:1.2;}
+.admin-tag{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 8px;border-radius:100px;font-size:0.62rem;
+  font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;
+  background:rgba(255,180,60,0.1);color:var(--gold);border:1px solid var(--border-bright);margin-top:3px;
+}
+.sb-logout{
+  margin-left:auto;width:28px;height:28px;border-radius:7px;
+  background:rgba(248,113,113,0.07);border:1px solid rgba(248,113,113,0.15);
+  color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:0.85rem;flex-shrink:0;transition:all 0.15s;
+}
+.sb-logout:hover{background:rgba(248,113,113,0.18);}
+
+/* ─── MAIN ─── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.topbar{
+  height:54px;padding:0 24px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(6,6,10,0.82);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.tb-title{font-family:'Clash Display',sans-serif;font-size:1.05rem;font-weight:700;letter-spacing:-0.3px;}
+.tb-badge{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:100px;
+  background:rgba(255,180,60,0.08);border:1px solid var(--border-bright);
+  font-size:0.72rem;color:var(--gold);font-family:'JetBrains Mono',monospace;
+}
+.tb-back{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 14px;border-radius:8px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);cursor:pointer;
+  font-family:'Cabinet Grotesk',sans-serif;font-size:0.83rem;font-weight:600;transition:all 0.15s;
+}
+.tb-back:hover{border-color:var(--gold);color:var(--gold);}
+
+/* ADMIN CONTENT */
+.admin-scroll{flex:1;overflow-y:auto;padding:24px;}
+.admin-grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
+
+/* STAT ROW */
+.stat-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:4px;}
+.stat-card{
+  padding:20px;border-radius:16px;
+  background:var(--surface2);border:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.sc-gold::before{background:linear-gradient(90deg,var(--gold),var(--gold2));}
+.sc-cyan::before{background:linear-gradient(90deg,var(--cyan),#00b4d8);}
+.sc-green::before{background:linear-gradient(90deg,var(--green),#10b981);}
+.sc-amber::before{background:linear-gradient(90deg,var(--amber),#f97316);}
+.stat-num{font-family:'Clash Display',sans-serif;font-size:2.2rem;font-weight:700;line-height:1;margin-bottom:4px;letter-spacing:-1px;}
+.sc-gold .stat-num{background:linear-gradient(135deg,var(--gold),var(--gold2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.sc-cyan .stat-num{color:var(--cyan);}
+.sc-green .stat-num{color:var(--green);}
+.sc-amber .stat-num{color:var(--amber);}
+.stat-label{font-size:0.78rem;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;}
+
+/* PANEL */
+.panel{
+  padding:22px;border-radius:18px;
+  background:var(--surface2);border:1px solid var(--border);
+}
+.panel-header-line{
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border);
+}
+.panel-title{font-family:'Clash Display',sans-serif;font-size:1rem;font-weight:700;letter-spacing:-0.3px;}
+.count-badge{
+  margin-left:auto;padding:2px 10px;border-radius:100px;
+  font-size:0.7rem;font-family:'JetBrains Mono',monospace;
+  background:var(--gold-dim);color:var(--gold);border:1px solid var(--border-bright);
+}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+/* .field-group styles inherited from parent */
+.field-label{display:block;margin-bottom:5px;font-size:0.72rem;font-weight:700;color:var(--muted);letter-spacing:0.8px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;}
+.field{
+  width:100%;padding:10px 13px;
+  background:var(--gold-dim);border:1px solid var(--border);border-radius:9px;
+  color:var(--text);font-family:'Cabinet Grotesk',sans-serif;font-size:0.88rem;outline:none;transition:all 0.2s;
+}
+.field:focus{border-color:var(--gold);}
+.field::placeholder{color:var(--muted2);}
+select.field{cursor:pointer;}
+
+/* INFO BOX */
+.info-box{
+  padding:12px 14px;border-radius:10px;margin-bottom:14px;
+  background:rgba(255,180,60,0.06);border:1px solid var(--border-bright);
+  font-size:0.8rem;color:var(--text-dim);line-height:1.6;
+}
+.info-box strong{color:var(--gold);}
+
+/* MEMBERS LIST */
+.members-list{display:flex;flex-direction:column;gap:8px;}
+.member-row{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;border-radius:10px;
+  background:var(--surface3);border:1px solid var(--border);
+  transition:border-color 0.15s;
+}
+.member-row:hover{border-color:var(--border-bright);}
+.m-avatar{
+  width:36px;height:36px;border-radius:9px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Clash Display',sans-serif;font-weight:700;font-size:0.78rem;color:#000;
+}
+.m-info{flex:1;min-width:0;}
+.m-name{font-size:0.88rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.m-email{font-size:0.72rem;color:var(--muted);font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.role-badge{
+  display:inline-flex;align-items:center;padding:2px 9px;border-radius:100px;
+  font-size:0.63rem;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;
+}
+.badge-admin{background:rgba(255,180,60,0.12);color:var(--gold);border:1px solid var(--border-bright);}
+.badge-member{background:rgba(255,180,60,0.04);color:var(--muted);border:1px solid var(--border);}
+.badge-pending{background:rgba(251,191,36,0.08);color:var(--amber);border:1px solid rgba(251,191,36,0.2);font-size:0.58rem;}
+.m-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.btn-change-role{
+  padding:5px 10px;border-radius:7px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-size:0.73rem;cursor:pointer;
+  transition:all 0.15s;font-family:'Cabinet Grotesk',sans-serif;font-weight:600;
+}
+.btn-change-role:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-dim);}
+.btn-remove{
+  padding:5px 10px;border-radius:7px;border:1px solid rgba(248,113,113,0.15);
+  background:rgba(248,113,113,0.06);color:var(--red);font-size:0.73rem;cursor:pointer;
+  transition:all 0.15s;font-family:'Cabinet Grotesk',sans-serif;font-weight:600;
+}
+.btn-remove:hover{background:rgba(248,113,113,0.18);}
+
+/* CREDS */
+.cred-item{
+  padding:14px;border-radius:12px;
+  background:var(--surface3);border:1px solid var(--border);margin-bottom:10px;
+}
+.cred-name{font-size:0.87rem;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.cred-row{display:flex;align-items:center;gap:6px;margin-top:6px;}
+.cred-key{font-size:0.7rem;font-family:'JetBrains Mono',monospace;color:var(--muted);width:50px;flex-shrink:0;}
+.cred-val{
+  flex:1;padding:6px 10px;border-radius:7px;
+  background:var(--gold-dim);border:1px solid var(--border);
+  font-size:0.78rem;font-family:'JetBrains Mono',monospace;color:var(--text-dim);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.copy-btn{
+  padding:5px 9px;border-radius:7px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-size:0.7rem;cursor:pointer;
+  transition:all 0.15s;font-family:'JetBrains Mono',monospace;flex-shrink:0;
+}
+.copy-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-dim);}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 18px;border-radius:9px;font-family:'Cabinet Grotesk',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;border:none;transition:all 0.17s;white-space:nowrap;}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;box-shadow:0 3px 14px rgba(255,180,60,0.25);}
+.btn-gold:hover{box-shadow:0 5px 22px rgba(255,180,60,0.4);transform:translateY(-1px);}
+.btn-sm{padding:7px 14px;font-size:0.8rem;}
+.btn-full{width:100%;margin-top:14px;}
+.btn:disabled{opacity:0.45;cursor:not-allowed;transform:none !important;}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 18px;border-radius:12px;font-size:0.85rem;font-weight:600;transform:translateY(70px);opacity:0;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);pointer-events:none;display:flex;align-items:center;gap:9px;}
+#toast.show{transform:translateY(0);opacity:1;}
+#toast.success{background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);color:var(--green);}
+#toast.error{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:var(--red);}
+#toast.info{background:var(--gold-dim);border:1px solid var(--border-bright);color:var(--gold);}
+
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;padding:32px;gap:10px;color:var(--muted);font-size:0.85rem;}
+.loader{width:16px;height:16px;border:2px solid var(--border-bright);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media(max-width:860px){
+  .admin-grid{grid-template-columns:1fr;}
+  .stat-row{grid-template-columns:repeat(2,1fr);}
+  .form-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div id="toast"></div>
+
+<div id="app">
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sb-brand">
+      <div class="sb-mark">H</div>
+      <div>
+        <div class="sb-brand-name">HAZA Collaborators</div>
+        <div class="sb-brand-sub">Admin Panel</div>
+      </div>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-section">Admin</div>
+      <div class="sb-item active"><span class="si-icon">👥</span> Team Members</div>
+      <div class="sb-item" onclick="window.location.href='dashboard.html'"><span class="si-icon">📋</span> Go to Dashboard</div>
+      <div class="sb-item" onclick="window.location.href='index.html'"><span class="si-icon">🏠</span> Home Page</div>
+    </div>
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-avatar" id="sb-avatar">J</div>
+        <div class="sb-user-flex">
+          <div class="sb-user-name" id="sb-name">—</div>
+          <div class="admin-tag">⚙️ Admin</div>
+        </div>
+        <button class="sb-logout" onclick="doLogout()" title="Logout">⏻</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div class="topbar">
+      <div class="tb-title">⚙️ Admin Panel</div>
+      <div class="topbar-right">
+        <div class="tb-badge">✦ ADMIN ACCESS</div>
+        <button class="tb-back" onclick="window.location.href='dashboard.html'">← Dashboard</button>
+      </div>
+    </div>
+
+    <div class="admin-scroll">
+      <div class="admin-grid">
+
+        <!-- STAT CARDS -->
+        <div class="stat-row">
+          <div class="stat-card sc-gold">
+            <div class="stat-num" id="stat-members">—</div>
+            <div class="stat-label">Total Members</div>
+          </div>
+          <div class="stat-card sc-amber">
+            <div class="stat-num" id="stat-admins">—</div>
+            <div class="stat-label">Admins</div>
+          </div>
+          <div class="stat-card sc-green">
+            <div class="stat-num" id="stat-projects">—</div>
+            <div class="stat-label">Projects</div>
+          </div>
+          <div class="stat-card sc-cyan">
+            <div class="stat-num" id="stat-posts">—</div>
+            <div class="stat-label">Total Posts</div>
+          </div>
+        </div>
+
+        <!-- ADD MEMBER -->
+        <div class="panel">
+          <div class="panel-header-line">
+            <div class="panel-title">➕ Add New Member</div>
+          </div>
+          <div class="info-box">
+             Fill in the details below to <strong>automatically</strong> create both the Firebase Auth account and the team profile.
+          </div>
+          <div class="form-grid">
+            <div class="field-group">
+              <label class="field-label">Full Name</label>
+              <input id="nm-name" class="field" placeholder="Janma Hasarel"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Email</label>
+              <input id="nm-email" class="field" type="email" placeholder="member@haza.dev"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Password (reference)</label>
+              <input id="nm-pw" class="field" type="text" placeholder="Set a shared password"/>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Role</label>
+              <select id="nm-role" class="field" title="Select member role">
+                <option value="member">Member</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Avatar Color</label>
+              <select id="nm-color" class="field" title="Select avatar color">
+                <option value="#ffb43c">Gold</option>
+                <option value="#ff7c2a">Orange</option>
+                <option value="#00e5ff">Cyan</option>
+                <option value="#34d399">Green</option>
+                <option value="#f87171">Red</option>
+                <option value="#a78bfa">Purple</option>
+                <option value="#60a5fa">Blue</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-gold btn-full" id="add-btn" onclick="addMember()">Add Member to Team</button>
+        </div>
+
+        <!-- WELCOME NOTE SETTING -->
+        <div class="panel">
+          <div class="panel-header-line">
+            <div class="panel-title">👋 Welcome Popup Note</div>
+          </div>
+          <div class="info-box">
+            This note will pop up for all users every time they log into the dashboard. You can use <strong>Markdown</strong> for formatting.
+          </div>
+          <div class="field-group mb-14">
+            <label class="field-label">Popup Content</label>
+            <textarea id="welcome-note-input" class="field welcome-ta" placeholder="Welcome to HAZA Collaborators!"></textarea>
+          </div>
+          <button class="btn btn-gold btn-full" id="save-welcome-btn" onclick="saveWelcomeNote()">Save Note</button>
+        </div>
+
+        <!-- CREDENTIALS -->
+        <div class="panel">
+          <div class="panel-header-line">
+            <div class="panel-title">🔑 Member Credentials</div>
+            <span class="count-badge" id="creds-count">0</span>
+          </div>
+          <p class="creds-hint">Share these with each member after creating their Firebase Auth account.</p>
+          <div id="creds-list"><div class="loading"><div class="loader"></div></div></div>
+        </div>
+
+        <!-- MEMBERS LIST -->
+        <div class="panel panel-full">
+          <div class="panel-header-line">
+            <div class="panel-title">👥 Team Members</div>
+            <span class="count-badge" id="members-count">0</span>
+          </div>
+          <div class="members-list" id="members-list"><div class="loading"><div class="loader"></div></div></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+import { 
+  getAuth, onAuthStateChanged, signOut, 
+  createUserWithEmailAndPassword, updateProfile 
+} from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+import {
+  getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc,
+  onSnapshot, query, orderBy, serverTimestamp, updateDoc
+} from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCXqiGYfRyAEBjz9I_ZHaMnkGXTvuATgps",
+  authDomain: "haza-collaborators.firebaseapp.com",
+  databaseURL: "https://haza-collaborators-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "haza-collaborators",
+  storageBucket: "haza-collaborators.firebasestorage.app",
+  messagingSenderId: "1053559570462",
+  appId: "1:1053559570462:web:5459a512e9218b136eae0f",
+  measurementId: "G-CS32VS7LH5"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+let CU = null;
+
+// ─── AUTH CHECK ───
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href = 'login.html'; return; }
+  const uSnap = await getDoc(doc(db,'users',user.uid));
+  if (!uSnap.exists()) { window.location.href = 'login.html'; return; }
+  CU = { uid: user.uid, ...uSnap.data() };
+  if (CU.role !== 'admin') { window.location.href = 'dashboard.html'; return; }
+
+  document.getElementById('sb-avatar').textContent = initials(CU.name||CU.email);
+  document.getElementById('sb-name').textContent = CU.name||CU.email;
+  listenMembers();
+  loadStats();
+  loadWelcomeNote();
+});
+
+// ─── HELPERS ───
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function initials(n){return String(n||'?').split(' ').map(c=>c[0]).join('').slice(0,2).toUpperCase();}
+function toast(msg,type='info'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className=`show ${type}`;
+  clearTimeout(el._t);el._t=setTimeout(()=>el.className='',3500);
+}
+function fmtDate(ts){
+  if(!ts)return '';
+  const d=ts.toMillis?new Date(ts.toMillis()):new Date(ts);
+  return d.toLocaleDateString([],{day:'numeric',month:'short',year:'numeric'});
+}
+
+// ─── STATS ───
+async function loadStats(){
+  const usersSnap = await getDocs(collection(db,'users'));
+  const users = [];
+  usersSnap.forEach(d=>users.push(d.data()));
+  document.getElementById('stat-members').textContent = users.length;
+  document.getElementById('stat-admins').textContent = users.filter(u=>u.role==='admin').length;
+  const projSnap = await getDocs(collection(db,'projects'));
+  document.getElementById('stat-projects').textContent = projSnap.size;
+  const postsSnap = await getDocs(collection(db,'posts'));
+  document.getElementById('stat-posts').textContent = postsSnap.size;
+}
+
+// ─── LISTEN MEMBERS ───
+function listenMembers(){
+  onSnapshot(collection(db,'users'), snap=>{
+    const users=[];
+    snap.forEach(d=>users.push({id:d.id,...d.data()}));
+    users.sort((a,b)=>{
+      if(!a.joined&&!b.joined)return 0;
+      if(!a.joined)return 1;if(!b.joined)return -1;
+      const ta=a.joined.toMillis?a.joined.toMillis():a.joined;
+      const tb=b.joined.toMillis?b.joined.toMillis():b.joined;
+      return ta-tb;
+    });
+    renderMembers(users);
+    renderCreds(users);
+    document.getElementById('members-count').textContent = users.length;
+    document.getElementById('creds-count').textContent = users.length;
+    loadStats();
+  });
+}
+
+// ─── ADD MEMBER ───
+window.addMember = async function(){
+  const name  = document.getElementById('nm-name').value.trim();
+  const email = document.getElementById('nm-email').value.trim();
+  const pw    = document.getElementById('nm-pw').value.trim();
+  const role  = document.getElementById('nm-role').value;
+  const color = document.getElementById('nm-color').value;
+  
+  if(!name||!email||!pw){toast('Name, email and password are required','error');return;}
+  if(pw.length < 6){toast('Password must be at least 6 characters','error');return;}
+
+  const btn = document.getElementById('add-btn');
+  btn.disabled = true; btn.textContent = 'Creating Account...';
+
+  let secondaryApp = null;
+  try {
+    // 1. Check if user already exists in Firestore
+    const snap = await getDocs(collection(db,'users'));
+    let exists = false;
+    snap.forEach(d=>{ if(d.data().email===email) exists = true; });
+    if(exists){ toast('Email already in team','error'); btn.disabled=false; btn.textContent='Add Member to Team'; return; }
+
+    // 2. Create Auth Account using a secondary instance to avoid logging out current admin
+    const appName = "Secondary_" + Date.now();
+    secondaryApp = initializeApp(firebaseConfig, appName);
+    const secondaryAuth = getAuth(secondaryApp);
+    
+    const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, pw);
+    const newUser = userCred.user;
+    
+    // Optional: set display name in Auth
+    await updateProfile(newUser, { displayName: name });
+    
+    const realUid = newUser.uid;
+    
+    // 3. Create Firestore Profile
+    await setDoc(doc(db,'users',realUid), {
+      uid: realUid,
+      name,
+      email,
+      role,
+      color,
+      password: pw, // Storing for reference as requested
+      joined: serverTimestamp()
+    });
+
+    // Cleanup
+    await signOut(secondaryAuth);
+    await deleteApp(secondaryApp);
+    secondaryApp = null;
+
+    document.getElementById('nm-name').value='';
+    document.getElementById('nm-email').value='';
+    document.getElementById('nm-pw').value='';
+    toast(`✓ ${name} added successfully!`,'success');
+  } catch(e){
+    console.error(e);
+    let msg = e.message;
+    if(e.code === 'auth/email-already-in-use') msg = "Auth account already exists for this email.";
+    toast('Error: ' + msg,'error');
+    if(secondaryApp) await deleteApp(secondaryApp);
+  }
+  btn.disabled=false; btn.textContent='Add Member to Team';
+};
+
+// ─── REMOVE MEMBER ───
+window.removeMember = async function(id){
+  if(id===CU.uid){toast("You can't remove yourself",'error');return;}
+  if(!confirm('Remove this member?'))return;
+  try{ await deleteDoc(doc(db,'users',id)); toast('Member removed','info'); }
+  catch(e){ toast('Error: '+e.message,'error'); }
+};
+
+// ─── TOGGLE ROLE ───
+window.toggleRole = async function(id, currentRole){
+  if(id===CU.uid){toast("Can't change your own role",'error');return;}
+  const newRole = currentRole==='admin'?'member':'admin';
+  try{ await updateDoc(doc(db,'users',id),{role:newRole}); toast(`Role → ${newRole}`,'success');}
+  catch(e){ toast('Error: '+e.message,'error'); }
+};
+
+// ─── RENDER MEMBERS ───
+function renderMembers(users){
+  const el = document.getElementById('members-list');
+  if(!users.length){ el.innerHTML='<div style="padding:20px;color:var(--muted);font-size:0.85rem;text-align:center;">No members yet.</div>'; return; }
+  el.innerHTML = users.map(u=>`
+    <div class="member-row">
+      <div class="m-avatar" style="background:linear-gradient(135deg,${u.color||'#ffb43c'},${u.color||'#ff7c2a'});">${initials(u.name||u.email)}</div>
+      <div class="m-info">
+        <div class="m-name">${esc(u.name||'—')}${u.id===CU.uid?' <span style="font-size:0.68rem;color:var(--muted);font-weight:400;">(You)</span>':''}</div>
+        <div class="m-email">${esc(u.email||'—')}</div>
+      </div>
+      <span style="font-size:0.7rem;color:var(--muted2);font-family:\'JetBrains Mono\',monospace;margin-right:4px;">${fmtDate(u.joined)}</span>
+      <span class="role-badge ${u.role==='admin'?'badge-admin':'badge-member'}">${u.role||'member'}</span>
+      <div class="m-actions">
+        <button class="btn-change-role" onclick="toggleRole('${u.id}','${u.role||'member'}')" ${u.id===CU.uid?'disabled style="opacity:0.3;cursor:not-allowed;"':''}>
+          ${(u.role||'member')==='admin'?'→ Member':'→ Admin'}
+        </button>
+        <button class="btn-remove" onclick="removeMember('${u.id}')" ${u.id===CU.uid?'disabled style="opacity:0.3;cursor:not-allowed;"':''}>Remove</button>
+      </div>
+    </div>`).join('');
+}
+
+// ─── RENDER CREDENTIALS ───
+function renderCreds(users){
+  const el = document.getElementById('creds-list');
+  if(!users.length){ el.innerHTML='<div style="padding:20px;color:var(--muted);font-size:0.85rem;text-align:center;">No members yet.</div>'; return; }
+  el.innerHTML = users.map(u=>`
+    <div class="cred-item">
+      <div class="cred-name">
+        ${esc(u.name||'—')}
+        <span class="role-badge ${u.role==='admin'?'badge-admin':'badge-member'}" style="font-size:0.6rem;">${u.role||'member'}</span>
+      </div>
+      <div class="cred-row">
+        <span class="cred-key">Email</span>
+        <div class="cred-val" id="ce-${u.id}">${esc(u.email||'—')}</div>
+        <button class="copy-btn" onclick="copyText('ce-${u.id}')">Copy</button>
+      </div>
+      <div class="cred-row">
+        <span class="cred-key">Pass</span>
+        <div class="cred-val" id="cp-${u.id}">${esc(u.password||'(Set in Firebase Auth)')}</div>
+        <button class="copy-btn" onclick="copyText('cp-${u.id}')">Copy</button>
+      </div>
+    </div>`).join('');
+}
+
+window.copyText = function(elId){
+  const val = document.getElementById(elId)?.textContent||'';
+  navigator.clipboard.writeText(val)
+    .then(()=>toast('Copied!','success'))
+    .catch(()=>toast('Copy failed','error'));
+};
+
+// ─── WELCOME NOTE ───
+async function loadWelcomeNote(){
+  const s = await getDoc(doc(db,'settings','welcome_note'));
+  if(s.exists()){
+    document.getElementById('welcome-note-input').value = s.data().content || '';
+  }
+}
+
+window.saveWelcomeNote = async function(){
+  const btn = document.getElementById('save-welcome-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  const content = document.getElementById('welcome-note-input').value.trim();
+  try{
+    await setDoc(doc(db,'settings','welcome_note'),{content, updated:serverTimestamp()});
+    toast('Welcome note saved!','success');
+  }catch(e){toast('Error: '+e.message,'error');}
+  btn.disabled = false; btn.textContent = 'Save Note';
+};
+
+// ─── AUTH ───
+window.doLogout = async function(){ await signOut(auth); window.location.href='login.html'; };
+</script>
+
+<!-- Three.js BG -->
+<script>
+(function(){
+  const c=document.getElementById('bg-canvas');if(!window.THREE)return;
+  const r=new THREE.WebGLRenderer({canvas:c,antialias:true,alpha:true});
+  r.setPixelRatio(Math.min(devicePixelRatio,2));r.setSize(innerWidth,innerHeight);
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,0.1,1000);
+  cam.position.z=60;
+  const rings=[];
+  const rGeo=[new THREE.TorusGeometry(14,0.06,8,80),new THREE.TorusGeometry(22,0.04,8,80),new THREE.TorusGeometry(32,0.03,8,80)];
+  const rMat=[
+    new THREE.MeshBasicMaterial({color:0xffb43c,transparent:true,opacity:0.14}),
+    new THREE.MeshBasicMaterial({color:0xff7c2a,transparent:true,opacity:0.09}),
+    new THREE.MeshBasicMaterial({color:0x00e5ff,transparent:true,opacity:0.05}),
+  ];
+  rGeo.forEach((g,i)=>{const m=new THREE.Mesh(g,rMat[i]);m.rotation.x=Math.PI/4+i*0.3;scene.add(m);rings.push(m);});
+  const N=350;const pos=new Float32Array(N*3);const col=new Float32Array(N*3);
+  for(let i=0;i<N;i++){
+    pos[i*3]=(Math.random()-0.5)*180;pos[i*3+1]=(Math.random()-0.5)*180;pos[i*3+2]=(Math.random()-0.5)*60;
+    const t=Math.random();
+    if(t<0.6){col[i*3]=1;col[i*3+1]=0.7;col[i*3+2]=0.23;}
+    else if(t<0.85){col[i*3]=1;col[i*3+1]=0.49;col[i*3+2]=0.16;}
+    else{col[i*3]=0;col[i*3+1]=0.9;col[i*3+2]=1;}
+  }
+  const pGeo=new THREE.BufferGeometry();
+  pGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  pGeo.setAttribute('color',new THREE.BufferAttribute(col,3));
+  scene.add(new THREE.Points(pGeo,new THREE.PointsMaterial({size:0.4,vertexColors:true,transparent:true,opacity:0.38})));
+  let mx=0,my=0;
+  document.addEventListener('mousemove',e=>{mx=(e.clientX/innerWidth-0.5)*0.4;my=-(e.clientY/innerHeight-0.5)*0.4;});
+  (function anim(){
+    requestAnimationFrame(anim);
+    const t=Date.now()*0.0003;
+    rings.forEach((ring,i)=>{ring.rotation.z=t*(0.15+i*0.07);ring.rotation.y=t*0.05+mx*0.3;ring.rotation.x=Math.PI/4+i*0.3+my*0.2;});
+    cam.position.x+=(mx*5-cam.position.x)*0.04;
+    cam.position.y+=(my*5-cam.position.y)*0.04;
+    cam.lookAt(0,0,0);r.render(scene,cam);
+  })();
+  window.addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();r.setSize(innerWidth,innerHeight);});
+})();
+</script>
+</body>
+</html>
